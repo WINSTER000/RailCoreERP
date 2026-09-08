@@ -153,7 +153,7 @@ Routes can be searched, filtered, sorted and managed through the railway operati
 ## 📍 Route Stations
 
 <p align="center">
-  <img width="1902" height="1078" alt="route-stations" src="https://github.com/user-attachments/assets/68f67b41-c765-4af7-a9d9-f913539c1bd9" />
+  <img width="1905" height="1077" alt="image" src="https://github.com/user-attachments/assets/564e00c5-3416-4461-9223-151504bf3aeb" />
 </p>
 
 Route stations define the ordered halts that make up each railway route.
