@@ -343,13 +343,13 @@ The exact credentials are printed at the end of the run. The accounts created ar
 
 | Username | Name | Role | Password |
 |---|---|---|---|
-| `admin` | Aarav Mehta | Admin (superuser) | `RailCore@2025` |
-| `rmanager` | Kavya Iyer | Railway Manager | `RailCore@2025` |
-| `rmanager2` | Rohan Deshpande | Railway Manager | `RailCore@2025` |
-| `smanager` | Neha Sharma | Station Manager | `RailCore@2025` |
-| `smanager2` | Vikram Rao | Station Manager | `RailCore@2025` |
-| `opsstaff` | Ishaan Nair | Operations Staff | `RailCore@2025` |
-| `opsstaff2` | Meera Krishnan | Operations Staff | `RailCore@2025` |
+| `admin` | Winster Lobo | Admin (superuser) | `RailCore@1234` |
+| `rmanager` | Arman Ali | Railway Manager | `RailCore@1234` |
+| `rmanager2` | Owais Khatri | Railway Manager | `RailCore@1234` |
+| `smanager` | Sameera Dream | Station Manager | `RailCore@1234` |
+| `smanager2` | Maya Dream | Station Manager | `RailCore@1234` |
+| `opsstaff` | Meera DY | Operations Staff | `RailCore@1234` |
+| `opsstaff2` | Jace Dream | Operations Staff | `RailCore@1234` |
 
 Sign in as each one to see how the sidebar, action buttons and permissions change.
 
