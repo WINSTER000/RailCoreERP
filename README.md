@@ -123,7 +123,7 @@ The activity log records important actions with the responsible user, affected o
 ## 🔑 Login
 
 <p align="center">
-  <img src="screenshots/login.png" alt="RailCore ERP Login" width="100%">
+  <img width="1919" height="1075" alt="login" src="https://github.com/user-attachments/assets/63ee6658-ce20-4824-ad8c-cc30922d5d0b" />
 </p>
 
 The login interface provides a clean entry point for authenticated railway staff.
@@ -133,7 +133,7 @@ The login interface provides a clean entry point for authenticated railway staff
 ## 📊 Dashboard
 
 <p align="center">
-  <img src="screenshots/dashboard.png" alt="RailCore ERP Dashboard" width="100%">
+  <img width="1900" height="1059" alt="dashboard" src="https://github.com/user-attachments/assets/071bf369-d352-4901-9cfa-22d1f1a37ed5" />
 </p>
 
 The operations dashboard presents live railway statistics, schedule information, train status, route activity, punctuality data and recent system activity.
@@ -143,7 +143,7 @@ The operations dashboard presents live railway statistics, schedule information,
 ## 🛤️ Routes
 
 <p align="center">
-  <img src="screenshots/routes.png" alt="RailCore ERP Routes" width="100%">
+  <img width="1919" height="1073" alt="routes" src="https://github.com/user-attachments/assets/fa4092d5-d8e2-4639-9b5e-6efb1184bac9" />
 </p>
 
 Routes can be searched, filtered, sorted and managed through the railway operations interface.
@@ -153,7 +153,7 @@ Routes can be searched, filtered, sorted and managed through the railway operati
 ## 📍 Route Stations
 
 <p align="center">
-  <img src="screenshots/route-stations.png" alt="RailCore ERP Route Stations" width="100%">
+  <img width="1902" height="1078" alt="route-stations" src="https://github.com/user-attachments/assets/68f67b41-c765-4af7-a9d9-f913539c1bd9" />
 </p>
 
 Route stations define the ordered halts that make up each railway route.
@@ -163,7 +163,7 @@ Route stations define the ordered halts that make up each railway route.
 ## 📅 Schedules
 
 <p align="center">
-  <img src="screenshots/schedules.png" alt="RailCore ERP Schedules" width="100%">
+  <img width="1905" height="1075" alt="schedules" src="https://github.com/user-attachments/assets/0d7a606d-5899-455d-8e51-29a82256a0b1" />
 </p>
 
 Schedules connect trains, routes, stations and platforms to specific operating dates and times.
@@ -173,7 +173,7 @@ Schedules connect trains, routes, stations and platforms to specific operating d
 ## 🚆 Trains
 
 <p align="center">
-  <img src="screenshots/trains.png" alt="RailCore ERP Trains" width="100%">
+  <img width="1903" height="1076" alt="trains" src="https://github.com/user-attachments/assets/c4d87002-b495-4d02-99ab-a60fa22e17de" />
 </p>
 
 The train management module provides operational information, status tracking and administrative actions.
@@ -183,7 +183,7 @@ The train management module provides operational information, status tracking an
 ## 🏗️ Platforms
 
 <p align="center">
-  <img src="screenshots/platforms.png" alt="RailCore ERP Platforms" width="100%">
+  <img width="1905" height="1075" alt="platforms" src="https://github.com/user-attachments/assets/f4a8518e-d60e-428b-bc6d-90a6cd3d48a0" />
 </p>
 
 Platforms are managed per station and are used when assigning schedules to railway operations.
@@ -193,7 +193,7 @@ Platforms are managed per station and are used when assigning schedules to railw
 ## 🏢 Stations
 
 <p align="center">
-  <img src="screenshots/stations.png" alt="RailCore ERP Stations" width="100%">
+  <img width="1901" height="1075" alt="stations" src="https://github.com/user-attachments/assets/ec692ec5-af27-463d-a706-a8b3bd6d6668" />
 </p>
 
 The station module provides centralized management of railway stations and their operational status.
@@ -203,7 +203,7 @@ The station module provides centralized management of railway stations and their
 ## 👥 Users
 
 <p align="center">
-  <img src="screenshots/users.png" alt="RailCore ERP Users" width="100%">
+  <img width="1904" height="1075" alt="users" src="https://github.com/user-attachments/assets/6bd51cf4-967c-4858-af1d-2b07526fdb21" />
 </p>
 
 Administrators can manage staff accounts, roles and account status from the user management module.
@@ -213,7 +213,7 @@ Administrators can manage staff accounts, roles and account status from the user
 ## 🔔 Notifications
 
 <p align="center">
-  <img src="screenshots/notifications.png" alt="RailCore ERP Notifications" width="100%">
+  <img width="1919" height="1076" alt="notifications" src="https://github.com/user-attachments/assets/daa597f9-ab6a-46c2-8ed5-7f5dee1144e4" />
 </p>
 
 The notification inbox keeps staff informed about important operational events.
@@ -223,7 +223,7 @@ The notification inbox keeps staff informed about important operational events.
 ## 📝 Activity Log
 
 <p align="center">
-  <img src="screenshots/activity-log.png" alt="RailCore ERP Activity Log" width="100%">
+  <img width="1905" height="1074" alt="activity-log" src="https://github.com/user-attachments/assets/07a030bd-b139-4c36-8b0f-f8f99e34c2fa" />
 </p>
 
 The activity log provides an audit trail of important system actions and operational changes.
