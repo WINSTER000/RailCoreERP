@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% load rc_tags %}
+
+{% comment %}
+Shared delete confirmation screen. Every delete view renders this template
+instead of removing the record straight away.
+
+Context contract:
+  object_type    "Train", "Station", ...
+  object_label   the human name of the record being removed
+  object_meta    list of (label, value) pairs shown as a summary
+  warning        optional sentence about knock-on effects
+  soft_delete    True when the record is archived rather than erased
+  cancel_url     where the Cancel button goes
+  confirm_label  wording of the destructive button
+The POST target is the current URL, so no action attribute is needed.
+{% endcomment %}
+
+{% block content %}
+  <form class="rc-confirm" method="post" data-rc-guard>
+    {% csrf_token %}
+
+    <div class="rc-confirm__icon">{% rc_icon "trash" %}</div>
+
+    <h2 class="rc-confirm__title">
+      Delete this {{ object_type|default:"record"|lower }}?
+    </h2>
+    <p class="rc-confirm__text">
+      {% if soft_delete %}
+        The record is archived, not erased. It disappears from the working lists and
+        can be restored later.
+      {% else %}
+        This permanently removes the record from RailCore ERP. The action cannot be
+        undone.
+      {% endif %}
+    </p>
+
+    <p class="rc-confirm__target">{{ object_label }}</p>
+
+    {% if object_meta %}
+      <dl class="rc-confirm__meta">
+        {% for label, value in object_meta %}
+          <div>
+            <dt>{{ label }}</dt>
+            <dd>{{ value }}</dd>
+          </div>
+        {% endfor %}
+      </dl>
+    {% endif %}
+
+    {% if warning %}
+      <p class="rc-confirm__note">
+        {% rc_icon "alert" "rc-icon rc-icon--sm" %}
+        <span>{{ warning }}</span>
+      </p>
+    {% endif %}
+
+    {% if soft_delete %}
+      <p class="rc-confirm__note rc-confirm__note--info">
+        {% rc_icon "info" "rc-icon rc-icon--sm" %}
+        <span>Archived records keep their history and can be restored by an administrator.</span>
+      </p>
+    {% endif %}
+
+    <div class="rc-confirm__actions">
+      <a class="rc-btn rc-btn--secondary" href="{{ cancel_url }}">
+        {% rc_icon "close" "rc-icon rc-icon--sm" %}Cancel
+      </a>
+      <button type="submit" class="rc-btn rc-btn--danger">
+        {% rc_icon "trash" "rc-icon rc-icon--sm" %}{{ confirm_label|default:"Yes, delete" }}
+      </button>
+    </div>
+  </form>
+{% endblock %}

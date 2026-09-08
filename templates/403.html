@@ -1,0 +1,39 @@
+{% extends "base_public.html" %}
+{% load rc_tags %}
+
+{% block title %}Access denied · RailCore ERP{% endblock %}
+
+{% block body %}
+  <div class="rc-public">
+    <div class="rc-public__card">
+      <div class="rc-empty__icon">{% rc_icon "shield" %}</div>
+      <p class="rc-public__code">403</p>
+      <h1 class="rc-public__title">Access denied</h1>
+      <p class="rc-public__text">
+        {% if exception %}
+          {{ exception }}
+        {% else %}
+          Your role does not include permission to open this screen. Ask an
+          administrator if you need wider access.
+        {% endif %}
+      </p>
+      <div class="rc-public__actions">
+        {% if user.is_authenticated %}
+          <a class="rc-btn rc-btn--primary" href="{% url 'dashboard:home' %}">
+            {% rc_icon "gauge" "rc-icon rc-icon--sm" %}Back to dashboard
+          </a>
+          <form method="post" action="{% url 'accounts:logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="rc-btn rc-btn--secondary">
+              {% rc_icon "logout" "rc-icon rc-icon--sm" %}Sign out
+            </button>
+          </form>
+        {% else %}
+          <a class="rc-btn rc-btn--primary" href="{% url 'accounts:login' %}">
+            {% rc_icon "login" "rc-icon rc-icon--sm" %}Sign in
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

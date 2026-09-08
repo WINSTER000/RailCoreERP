@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% load rc_tags %}
+
+{% block page_actions %}
+  <div class="rc-page__actions">
+    {% if unread_total %}
+      <form method="post" action="{% url 'notifications:mark_all_read' %}">
+        {% csrf_token %}
+        <button type="submit" class="rc-btn rc-btn--primary">
+          {% rc_icon "check" "rc-icon rc-icon--sm" %}Mark All Read
+        </button>
+      </form>
+    {% endif %}
+  </div>
+{% endblock %}
+
+{% block content %}
+  <section class="rc-card rc-card--flush">
+    <form class="rc-toolbar" method="get">
+      <div class="rc-toolbar__search">
+        <div class="rc-toolbar__filters">
+          <label class="rc-filter">
+            <span class="rc-filter__label">Level</span>
+            <select class="rc-select" name="level" data-rc-autosubmit>
+              <option value="">All levels</option>
+              {% for value, label in level_options %}
+                <option value="{{ value }}" {% if level_filter == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </label>
+
+          <label class="rc-filter">
+            <span class="rc-filter__label">State</span>
+            <select class="rc-select" name="read" data-rc-autosubmit>
+              <option value="">Read and unread</option>
+              <option value="unread" {% if read_filter == "unread" %}selected{% endif %}>Unread only</option>
+              <option value="read" {% if read_filter == "read" %}selected{% endif %}>Read only</option>
+            </select>
+          </label>
+
+          {% if level_filter or read_filter %}
+            <a class="rc-btn rc-btn--ghost rc-btn--sm" href="{% url 'notifications:list' %}">
+              {% rc_icon "close" "rc-icon rc-icon--sm" %}Clear
+            </a>
+          {% endif %}
+        </div>
+
+        <input type="hidden" name="page" value="">
+        <noscript><button type="submit" class="rc-btn rc-btn--secondary rc-btn--sm">Apply</button></noscript>
+      </div>
+
+      <p class="rc-toolbar__meta">
+        {{ total_count }} shown
+        {% if unread_total %}<span class="rc-chip">{{ unread_total }} unread</span>{% endif %}
+      </p>
+    </form>
+
+    {% if notifications %}
+      <ul class="rc-notices">
+        {% for notification in notifications %}
+          <li class="rc-notice {% if not notification.is_read %}rc-notice--unread{% endif %}">
+            <span class="rc-notice__icon rc-notice__icon--{{ notification.level|badge_tone }}">
+              {% rc_icon notification.icon %}
+            </span>
+
+            <div class="rc-notice__body">
+              <p class="rc-notice__title">
+                {{ notification.title }}
+                {% if not notification.is_read %}
+                  <span class="rc-sr-only">(unread)</span>
+                  <span class="rc-notice__dot" aria-hidden="true"></span>
+                {% endif %}
+              </p>
+              <p class="rc-notice__text">{{ notification.message }}</p>
+              <p class="rc-notice__meta">
+                {% rc_badge notification.level %}
+                <span>{{ notification.created_at|date:"d M Y, H:i" }}</span>
+                {% if notification.is_read %}<span>Read</span>{% endif %}
+              </p>
+            </div>
+
+            <div class="rc-notice__actions">
+              {% if notification.url %}
+                <form method="post" action="{% url 'notifications:mark_read' notification.pk %}">
+                  {% csrf_token %}
+                  <button type="submit" class="rc-btn rc-btn--secondary rc-btn--sm">
+                    {% rc_icon "arrow-right" "rc-icon rc-icon--sm" %}Open
+                  </button>
+                </form>
+              {% elif not notification.is_read %}
+                <form method="post" action="{% url 'notifications:mark_read' notification.pk %}">
+                  {% csrf_token %}
+                  <button type="submit" class="rc-btn rc-btn--secondary rc-btn--sm">
+                    {% rc_icon "check" "rc-icon rc-icon--sm" %}Mark Read
+                  </button>
+                </form>
+              {% endif %}
+              <form method="post" action="{% url 'notifications:delete' notification.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="rc-icon-btn rc-icon-btn--delete"
+                        title="Delete notification" aria-label="Delete notification {{ notification.title }}">
+                  {% rc_icon "trash" %}
+                </button>
+              </form>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+
+      <div class="rc-card__footer">
+        {% include "partials/_pagination.html" %}
+      </div>
+    {% else %}
+      <div class="rc-card__body">
+        {% if level_filter or read_filter %}
+          {% with empty_icon="filter" empty_title="Nothing matches this view" empty_text="Clear the filters to see every notification raised for you." empty_url=request.path empty_action="Clear filters" %}
+            {% include "partials/_empty_state.html" %}
+          {% endwith %}
+        {% else %}
+          {% with empty_icon="inbox" empty_title="You are all caught up" empty_text="Cancellations, delays and other important activity will show up here." %}
+            {% include "partials/_empty_state.html" %}
+          {% endwith %}
+        {% endif %}
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

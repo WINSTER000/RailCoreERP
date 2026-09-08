@@ -1,0 +1,11 @@
+{% extends "railway/_form_shell.html" %}
+{% load rc_tags %}
+
+{% block fields %}
+  {% rc_field form.train "train" %}
+  {% rc_field form.platform "layers" %}
+  {% rc_field form.departure_datetime "clock" %}
+  {% rc_field form.arrival_datetime "clock" %}
+  {% rc_field form.delay_minutes "alert" %}
+  {% rc_field form.is_cancelled %}
+{% endblock %}

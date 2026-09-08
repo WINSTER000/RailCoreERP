@@ -1,0 +1,22 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="RailCore ERP - railway operations management for stations, routes, trains and schedules.">
+  <title>{% block title %}{{ page_title|default:"RailCore ERP" }} · RailCore ERP{% endblock %}</title>
+  <link rel="icon" type="image/svg+xml" href="{% static 'images/favicon.svg' %}">
+  <link rel="stylesheet" href="{% static 'css/railcore.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  {% include "partials/_icons.html" %}
+
+  {% include "partials/_messages.html" %}
+
+  {% block body %}{% endblock %}
+
+  <script src="{% static 'js/railcore.js' %}"></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

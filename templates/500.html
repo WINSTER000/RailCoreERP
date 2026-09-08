@@ -1,0 +1,35 @@
+{% load static rc_tags %}<!DOCTYPE html>
+{% comment %}
+Django's default 500 handler renders this with an empty context and without any
+context processors, so this page deliberately extends nothing and reads no
+context variables.
+{% endcomment %}
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Server error · RailCore ERP</title>
+  <link rel="icon" type="image/svg+xml" href="{% static 'images/favicon.svg' %}">
+  <link rel="stylesheet" href="{% static 'css/railcore.css' %}">
+</head>
+<body>
+  {% include "partials/_icons.html" %}
+
+  <div class="rc-public">
+    <div class="rc-public__card">
+      <div class="rc-empty__icon">{% rc_icon "server" %}</div>
+      <p class="rc-public__code">500</p>
+      <h1 class="rc-public__title">Something went wrong</h1>
+      <p class="rc-public__text">
+        RailCore ERP could not complete that request. The error has been recorded.
+        Try again in a moment, and tell an administrator if it keeps happening.
+      </p>
+      <div class="rc-public__actions">
+        <a class="rc-btn rc-btn--primary" href="{% url 'dashboard:home' %}">
+          {% rc_icon "gauge" "rc-icon rc-icon--sm" %}Back to dashboard
+        </a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

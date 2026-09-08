@@ -1,0 +1,52 @@
+{% load rc_tags %}
+{% comment %}
+Pagination footer for every list screen. Expects ``page_obj``.
+
+{% querystring %} (Django 5.1+) rewrites only the page parameter, so the
+current search, filter and sort selections survive every jump.
+{% endcomment %}
+{% if page_obj.paginator.num_pages > 1 %}
+  <nav class="rc-pagination" aria-label="Pagination">
+    <p class="rc-pagination__info">
+      Showing {{ page_obj.start_index }}-{{ page_obj.end_index }}
+      of {{ page_obj.paginator.count }}
+      · page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </p>
+
+    <div class="rc-pagination__pages">
+      {% if page_obj.has_previous %}
+        <a class="rc-pagination__link" href="{% querystring page=page_obj.previous_page_number %}" rel="prev">
+          {% rc_icon "chevron-left" "rc-icon rc-icon--sm" %}
+          <span class="rc-sr-only">Previous page</span>
+        </a>
+      {% else %}
+        <span class="rc-pagination__link is-disabled" aria-hidden="true">
+          {% rc_icon "chevron-left" "rc-icon rc-icon--sm" %}
+        </span>
+      {% endif %}
+
+      {% for num in page_obj.paginator.page_range %}
+        {% if num == page_obj.number %}
+          <span class="rc-pagination__link is-active" aria-current="page">{{ num }}</span>
+        {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+          <a class="rc-pagination__link" href="{% querystring page=num %}">{{ num }}</a>
+        {% elif num == 1 or num == page_obj.paginator.num_pages %}
+          <a class="rc-pagination__link" href="{% querystring page=num %}">{{ num }}</a>
+        {% elif num == page_obj.number|add:"-3" or num == page_obj.number|add:"3" %}
+          <span class="rc-pagination__link is-disabled" aria-hidden="true">…</span>
+        {% endif %}
+      {% endfor %}
+
+      {% if page_obj.has_next %}
+        <a class="rc-pagination__link" href="{% querystring page=page_obj.next_page_number %}" rel="next">
+          {% rc_icon "chevron-right" "rc-icon rc-icon--sm" %}
+          <span class="rc-sr-only">Next page</span>
+        </a>
+      {% else %}
+        <span class="rc-pagination__link is-disabled" aria-hidden="true">
+          {% rc_icon "chevron-right" "rc-icon rc-icon--sm" %}
+        </span>
+      {% endif %}
+    </div>
+  </nav>
+{% endif %}

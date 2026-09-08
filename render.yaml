@@ -1,0 +1,46 @@
+# Render Blueprint for RailCore ERP
+# ---------------------------------
+# Create the whole stack (web service + PostgreSQL database) in one step:
+#   Render dashboard -> New -> Blueprint -> point it at this repository.
+#
+# Render automatically provides RENDER_EXTERNAL_HOSTNAME, which config/settings.py
+# adds to ALLOWED_HOSTS and CSRF_TRUSTED_ORIGINS, so no host configuration is needed.
+
+databases:
+  - name: railcore-db
+    databaseName: railcore
+    user: railcore
+    plan: free
+
+services:
+  - type: web
+    name: railcore-erp
+    runtime: python
+    plan: free
+    region: singapore
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn config.wsgi:application --workers 3 --timeout 60 --access-logfile - --error-logfile -"
+    healthCheckPath: /accounts/login/
+    envVars:
+      # Connection string for the managed PostgreSQL database above.
+      # settings.py reads DATABASE_URL in preference to the DB_* variables.
+      - key: DATABASE_URL
+        fromDatabase:
+          name: railcore-db
+          property: connectionString
+
+      # Generated once by Render and never stored in the repository.
+      - key: SECRET_KEY
+        generateValue: true
+
+      - key: DEBUG
+        value: "False"
+
+      - key: TIME_ZONE
+        value: "Asia/Kolkata"
+
+      - key: LOG_LEVEL
+        value: "INFO"
+
+      - key: PYTHON_VERSION
+        value: "3.12.6"

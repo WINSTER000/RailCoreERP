@@ -1,0 +1,10 @@
+{% extends "railway/_form_shell.html" %}
+{% load rc_tags %}
+
+{% block fields %}
+  {% rc_field form.route "route" %}
+  {% rc_field form.station "building" %}
+  {% rc_field form.sequence_number "list" %}
+  {% rc_field form.arrival_offset "clock" %}
+  {% rc_field form.departure_offset "clock" %}
+{% endblock %}

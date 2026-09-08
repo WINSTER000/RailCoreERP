@@ -1,0 +1,78 @@
+{% extends "base_public.html" %}
+{% load rc_tags %}
+
+{% block title %}Sign in · RailCore ERP{% endblock %}
+
+{% block body %}
+  <div class="rc-auth">
+    <aside class="rc-auth__aside">
+      <div class="rc-auth__aside-inner">
+        <div class="rc-auth__brand">
+          <span class="rc-sidebar__logo">{% rc_icon "train" %}</span>
+          <span class="rc-sidebar__brand-text">
+            <span class="rc-sidebar__name">RailCore ERP</span>
+            <span class="rc-sidebar__tag">Railway Operations</span>
+          </span>
+        </div>
+
+        <h1 class="rc-auth__headline">Run the network from one workspace.</h1>
+        <p class="rc-auth__text">
+          Stations, platforms, corridors, rolling stock and the daily timetable,
+          held together with role based access and a full audit trail.
+        </p>
+
+        <ul class="rc-auth__points">
+          <li class="rc-auth__point">
+            {% rc_icon "route" %}
+            <span>Plan corridors and their stopping patterns, then assign rakes to them.</span>
+          </li>
+          <li class="rc-auth__point">
+            {% rc_icon "calendar" %}
+            <span>Book platforms without double allocation, and record delays as they happen.</span>
+          </li>
+          <li class="rc-auth__point">
+            {% rc_icon "shield" %}
+            <span>Every change is logged against the employee who made it.</span>
+          </li>
+        </ul>
+      </div>
+    </aside>
+
+    <main class="rc-auth__main">
+      <div class="rc-auth__card">
+        <section class="rc-card">
+          <h2 class="rc-auth__title">Sign in</h2>
+          <p class="rc-auth__subtitle">Use the RailCore account issued to you.</p>
+
+          <form method="post" novalidate>
+            {% csrf_token %}
+            {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+
+            {% if form.non_field_errors %}
+              <div class="rc-form-errors" role="alert">
+                {% for error in form.non_field_errors %}
+                  <p class="rc-form-errors__item">{% rc_icon "alert" "rc-icon rc-icon--sm" %}<span>{{ error }}</span></p>
+                {% endfor %}
+              </div>
+            {% endif %}
+
+            <div class="rc-stack rc-stack--sm">
+              {% rc_field form.username "user" %}
+              {% rc_field form.password "lock" %}
+            </div>
+
+            <div class="rc-form__actions">
+              <button type="submit" class="rc-btn rc-btn--primary rc-btn--block rc-btn--lg">
+                {% rc_icon "login" "rc-icon rc-icon--sm" %}Sign in
+              </button>
+            </div>
+          </form>
+
+          <p class="rc-auth__footer">
+            Forgotten your password? Ask a RailCore administrator to reset it for you.
+          </p>
+        </section>
+      </div>
+    </main>
+  </div>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load rc_tags %}
+
+{% comment %}
+Shared frame for every railway add/edit screen. A module template extends this
+and fills {% block fields %} with its own {% rc_field %} calls, so the card,
+error summary and action bar are written once.
+
+Context (supplied by railway.views._form_context):
+  form, form_title, form_description, cancel_url, submit_label, is_edit
+{% endcomment %}
+
+{% block content %}
+  <section class="rc-card rc-card--form rc-card--accent">
+    <header class="rc-card__header">
+      <div class="rc-card__titles">
+        <h2 class="rc-card__title">{{ form_title }}</h2>
+        <p class="rc-card__subtitle">{{ form_description }}</p>
+      </div>
+    </header>
+
+    <form method="post" novalidate data-rc-guard>
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="rc-form-errors" role="alert">
+          {% for error in form.non_field_errors %}
+            <p class="rc-form-errors__item">
+              {% rc_icon "alert" "rc-icon rc-icon--sm" %}<span>{{ error }}</span>
+            </p>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="rc-card__body">
+        <div class="rc-form__grid">
+          {% block fields %}{% endblock %}
+        </div>
+      </div>
+
+      <div class="rc-form__actions">
+        <a class="rc-btn rc-btn--secondary" href="{{ cancel_url }}">
+          {% rc_icon "close" "rc-icon rc-icon--sm" %}Cancel
+        </a>
+        <button type="submit" class="rc-btn rc-btn--primary">
+          {% rc_icon "save" "rc-icon rc-icon--sm" %}{{ submit_label|default:"Save" }}
+        </button>
+      </div>
+    </form>
+  </section>
+{% endblock %}

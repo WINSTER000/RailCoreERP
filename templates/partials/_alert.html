@@ -1,0 +1,17 @@
+{% load rc_tags %}
+{% comment %}
+One toast. Included from partials/_messages.html inside a {% with %} that
+supplies ``tone``, ``icon`` and ``heading``; ``message`` comes from the
+surrounding loop.
+{% endcomment %}
+<div class="rc-alert rc-alert--{{ tone }}" data-rc-alert>
+  {% rc_icon icon "rc-alert__icon" %}
+  <div class="rc-alert__body">
+    <p class="rc-alert__title">{{ heading }}</p>
+    <p class="rc-alert__text">{{ message }}</p>
+  </div>
+  <button type="button" class="rc-alert__close" data-rc-alert-close>
+    {% rc_icon "close" %}
+    <span class="rc-sr-only">Dismiss</span>
+  </button>
+</div>

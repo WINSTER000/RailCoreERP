@@ -1,0 +1,10 @@
+{% extends "railway/_form_shell.html" %}
+{% load rc_tags %}
+
+{% block fields %}
+  {% rc_field form.name "building" %}
+  {% rc_field form.station_code %}
+  {% rc_field form.city "map-pin" %}
+  {% rc_field form.state "map-pin" %}
+  {% rc_field form.is_active %}
+{% endblock %}

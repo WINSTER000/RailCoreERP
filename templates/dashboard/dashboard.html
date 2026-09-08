@@ -1,0 +1,422 @@
+{% extends "base.html" %}
+{% load rc_tags %}
+
+{% block title %}Dashboard · RailCore ERP{% endblock %}
+
+{% block content %}
+  {# ---- Headline counters, all six computed per request ------------------ #}
+  <div class="rc-stats">
+    {% for card in stat_cards %}
+      {% if card.url %}<a class="rc-stat" href="{{ card.url }}">{% else %}<div class="rc-stat">{% endif %}
+        <div class="rc-stat__top">
+          <div>
+            <p class="rc-stat__value">{{ card.value }}</p>
+            <p class="rc-stat__label">{{ card.label }}</p>
+          </div>
+          <span class="rc-stat__icon rc-stat__icon--{{ card.tone }}">
+            {% rc_icon card.icon %}
+          </span>
+        </div>
+        <p class="rc-stat__meta">{{ card.meta }}</p>
+      {% if card.url %}</a>{% else %}</div>{% endif %}
+    {% endfor %}
+  </div>
+
+  <div class="rc-grid rc-grid--split">
+    {# ---- Seven day departure load -------------------------------------- #}
+    <section class="rc-card">
+      <header class="rc-card__header">
+        <div class="rc-card__titles">
+          <h2 class="rc-card__title">Departures this week</h2>
+          <p class="rc-card__subtitle">
+            {{ week_total }} run{{ week_total|pluralize }} booked over the next seven days
+          </p>
+        </div>
+        <div class="rc-card__actions">
+          <a class="rc-btn rc-btn--secondary rc-btn--sm" href="{% url 'railway:schedule_list' %}">
+            {% rc_icon "calendar" "rc-icon rc-icon--sm" %}All schedules
+          </a>
+        </div>
+      </header>
+      <div class="rc-card__body">
+        {% if week_peak %}
+          <div class="rc-chart">
+            <div class="rc-chart__bars">
+              {% for row in week_rows %}
+                <div class="rc-chart__bar">
+                  <span class="rc-chart__label">{{ row.label }}</span>
+                  <span class="rc-chart__track">
+                    <span class="rc-chart__fill rc-chart__fill--{{ row.tone }}"
+                          data-rc-percent="{{ row.percent }}"
+                          role="img"
+                          aria-label="{{ row.label }}: {{ row.total }} departure{{ row.total|pluralize }}"></span>
+                  </span>
+                  <span class="rc-chart__value">{{ row.total }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        {% else %}
+          <div class="rc-empty">
+            <div class="rc-empty__icon">{% rc_icon "calendar" %}</div>
+            <p class="rc-empty__title">No departures booked</p>
+            <p class="rc-empty__text">Nothing is scheduled for the next seven days.</p>
+            {% if rc_perms.schedules.manage %}
+              <div class="rc-empty__actions">
+                <a class="rc-btn rc-btn--primary" href="{% url 'railway:schedule_add' %}">
+                  {% rc_icon "plus" "rc-icon rc-icon--sm" %}Add Schedule
+                </a>
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+    </section>
+
+    {# ---- Fleet status donut -------------------------------------------- #}
+    <section class="rc-card">
+      <header class="rc-card__header">
+        <div class="rc-card__titles">
+          <h2 class="rc-card__title">Fleet status</h2>
+          <p class="rc-card__subtitle">{{ fleet.total }} train{{ fleet.total|pluralize }} on the books</p>
+        </div>
+      </header>
+      <div class="rc-card__body">
+        {% if fleet.total %}
+          <div class="rc-donut">
+            <svg class="rc-donut__svg" viewBox="0 0 160 160" aria-hidden="true">
+              <circle cx="80" cy="80" r="68" fill="none" stroke="var(--rc-neutral-bg)" stroke-width="18"></circle>
+              {% for segment in fleet.segments %}
+                {% if segment.value %}
+                  <circle cx="80" cy="80" r="68" fill="none" stroke-width="18" stroke-linecap="butt"
+                          stroke="var(--rc-{{ segment.tone }})"
+                          stroke-dasharray="{{ segment.dash }}"
+                          stroke-dashoffset="{{ segment.offset }}"></circle>
+                {% endif %}
+              {% endfor %}
+            </svg>
+            <div class="rc-donut__center">
+              <p class="rc-donut__value">{{ fleet.active_percent }}%</p>
+              <p class="rc-donut__label">In service</p>
+            </div>
+          </div>
+          <div class="rc-legend">
+            {% for segment in fleet.segments %}
+              <span class="rc-legend__item">
+                <span class="rc-legend__dot rc-legend__dot--{{ segment.tone }}"></span>
+                {{ segment.label }}
+                <strong>{{ segment.value }} · {{ segment.percent }}%</strong>
+              </span>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="rc-empty">
+            <div class="rc-empty__icon">{% rc_icon "train" %}</div>
+            <p class="rc-empty__title">No trains registered</p>
+            <p class="rc-empty__text">Add rolling stock to see the fleet breakdown.</p>
+            {% if rc_perms.trains.manage %}
+              <div class="rc-empty__actions">
+                <a class="rc-btn rc-btn--primary" href="{% url 'railway:train_add' %}">
+                  {% rc_icon "plus" "rc-icon rc-icon--sm" %}Add Train
+                </a>
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+
+  <div class="rc-grid rc-grid--split">
+    {# ---- Recent activity ---------------------------------------------- #}
+    <section class="rc-card">
+      <header class="rc-card__header">
+        <div class="rc-card__titles">
+          <h2 class="rc-card__title">Recent activity</h2>
+          <p class="rc-card__subtitle">The latest changes recorded in the audit trail</p>
+        </div>
+        {% if rc_perms.activity_logs.view %}
+          <div class="rc-card__actions">
+            <a class="rc-btn rc-btn--secondary rc-btn--sm" href="{% url 'activity_logs:list' %}">
+              {% rc_icon "history" "rc-icon rc-icon--sm" %}Full log
+            </a>
+          </div>
+        {% endif %}
+      </header>
+      <div class="rc-card__body">
+        {% if activity_feed %}
+          <div class="rc-feed">
+            {% for entry in activity_feed %}
+              <div class="rc-feed__item">
+                <span class="rc-feed__icon rc-feed__icon--{{ entry.tone }}">
+                  {% rc_icon entry.icon %}
+                </span>
+                <div class="rc-feed__body">
+                  <p class="rc-feed__text">{{ entry.log.description }}</p>
+                  <p class="rc-feed__meta">
+                    <span>{{ entry.actor }}</span>
+                    <span aria-hidden="true">·</span>
+                    <span>{{ entry.log.created_at|timesince }} ago</span>
+                    {% if entry.log.model_name %}
+                      <span aria-hidden="true">·</span>
+                      <span>{{ entry.log.model_name }}</span>
+                    {% endif %}
+                  </p>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="rc-empty">
+            <div class="rc-empty__icon">{% rc_icon "activity" %}</div>
+            <p class="rc-empty__title">No activity yet</p>
+            <p class="rc-empty__text">Changes you make will be recorded here.</p>
+          </div>
+        {% endif %}
+      </div>
+    </section>
+
+    {# ---- System status ------------------------------------------------- #}
+    <section class="rc-card">
+      <header class="rc-card__header">
+        <div class="rc-card__titles">
+          <h2 class="rc-card__title">System status</h2>
+          <p class="rc-card__subtitle">Live health of the operating network</p>
+        </div>
+      </header>
+      <div class="rc-card__body">
+        <div class="rc-status-list">
+          {% for row in system_status %}
+            <div class="rc-status-item">
+              <span class="rc-status-item__label">
+                <span class="rc-status-dot rc-status-dot--{{ row.state }}"></span>
+                {{ row.label }}
+              </span>
+              <span class="rc-status-item__value">{{ row.value }}</span>
+            </div>
+          {% endfor %}
+        </div>
+
+        <hr class="rc-divider">
+
+        <h3 class="rc-form__section-title">Punctuality · last {{ punctuality.window_days }} days</h3>
+        <p class="rc-form__section-text">
+          {% if punctuality.total %}
+            {{ punctuality.on_time }} of {{ punctuality.total }} run{{ punctuality.total|pluralize }} ran on time.
+            {% if punctuality.delayed %}Average delay {{ punctuality.average_delay }} min.{% endif %}
+          {% else %}
+            No runs departed in this window.
+          {% endif %}
+        </p>
+        <div class="rc-meter">
+          <span class="rc-meter__fill rc-meter__fill--{{ punctuality.tone }}"
+                data-rc-percent="{{ punctuality.on_time_percent }}"
+                role="img"
+                aria-label="On time: {{ punctuality.on_time_percent }} percent"></span>
+        </div>
+        <div class="rc-legend">
+          <span class="rc-legend__item">
+            <span class="rc-legend__dot rc-legend__dot--success"></span>On time
+            <strong>{{ punctuality.on_time }} · {{ punctuality.on_time_percent }}%</strong>
+          </span>
+          <span class="rc-legend__item">
+            <span class="rc-legend__dot rc-legend__dot--warning"></span>Delayed
+            <strong>{{ punctuality.delayed }} · {{ punctuality.delayed_percent }}%</strong>
+          </span>
+          <span class="rc-legend__item">
+            <span class="rc-legend__dot rc-legend__dot--danger"></span>Cancelled
+            <strong>{{ punctuality.cancelled }} · {{ punctuality.cancelled_percent }}%</strong>
+          </span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="rc-grid rc-grid--split">
+    {# ---- Next departures ----------------------------------------------- #}
+    <section class="rc-card rc-card--flush">
+      <header class="rc-card__header">
+        <div class="rc-card__titles">
+          <h2 class="rc-card__title">Next departures</h2>
+          <p class="rc-card__subtitle">The runs leaving soonest across the network</p>
+        </div>
+        <div class="rc-card__actions">
+          <a class="rc-btn rc-btn--secondary rc-btn--sm" href="{% url 'railway:schedule_list' %}?status=upcoming">
+            {% rc_icon "arrow-right" "rc-icon rc-icon--sm" %}View all
+          </a>
+        </div>
+      </header>
+      {% if next_departures %}
+        <div class="rc-card__body">
+          <div class="rc-table-wrap">
+            <table class="rc-table">
+              <caption class="rc-sr-only">Upcoming train departures</caption>
+              <thead>
+                <tr>
+                  <th scope="col" class="rc-th">Train</th>
+                  <th scope="col" class="rc-th">Platform</th>
+                  <th scope="col" class="rc-th">Departs</th>
+                  <th scope="col" class="rc-th rc-th--center">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for schedule in next_departures %}
+                  <tr data-rc-href="{% url 'railway:schedule_detail' schedule.pk %}">
+                    <td class="rc-td">
+                      <span class="rc-cell">
+                        <span class="rc-cell__primary">{{ schedule.train.train_number }}</span>
+                        <span class="rc-cell__secondary">{{ schedule.train.train_name }}</span>
+                      </span>
+                    </td>
+                    <td class="rc-td">
+                      <span class="rc-cell">
+                        <span class="rc-cell__primary">{{ schedule.platform.station.station_code }}</span>
+                        <span class="rc-cell__secondary">{{ schedule.platform.label }}</span>
+                      </span>
+                    </td>
+                    <td class="rc-td rc-tabular">
+                      <span class="rc-cell">
+                        <span class="rc-cell__primary">{{ schedule.departure_datetime|date:"H:i" }}</span>
+                        <span class="rc-cell__secondary">{{ schedule.departure_datetime|date:"D d M" }}</span>
+                      </span>
+                    </td>
+                    <td class="rc-td rc-td--center">
+                      {% rc_badge schedule.display_status %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      {% else %}
+        <div class="rc-card__body">
+          <div class="rc-empty">
+            <div class="rc-empty__icon">{% rc_icon "clock" %}</div>
+            <p class="rc-empty__title">Nothing due to depart</p>
+            <p class="rc-empty__text">There are no upcoming runs on the timetable.</p>
+            {% if rc_perms.schedules.manage %}
+              <div class="rc-empty__actions">
+                <a class="rc-btn rc-btn--primary" href="{% url 'railway:schedule_add' %}">
+                  {% rc_icon "plus" "rc-icon rc-icon--sm" %}Add Schedule
+                </a>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+    </section>
+
+    <div class="rc-stack">
+      {# ---- Quick actions, filtered by role --------------------------- #}
+      {% if quick_actions %}
+        <section class="rc-card">
+          <header class="rc-card__header">
+            <div class="rc-card__titles">
+              <h2 class="rc-card__title">Quick actions</h2>
+              <p class="rc-card__subtitle">Shortcuts available to your role</p>
+            </div>
+          </header>
+          <div class="rc-card__body">
+            <div class="rc-quick">
+              {% for action in quick_actions %}
+                <a class="rc-quick__item" href="{{ action.url }}">
+                  <span class="rc-quick__icon">{% rc_icon action.icon %}</span>
+                  <span class="rc-quick__label">{{ action.label }}</span>
+                </a>
+              {% endfor %}
+            </div>
+          </div>
+        </section>
+      {% endif %}
+
+      {# ---- Busiest routes ------------------------------------------- #}
+      <section class="rc-card">
+        <header class="rc-card__header">
+          <div class="rc-card__titles">
+            <h2 class="rc-card__title">Busiest routes</h2>
+            <p class="rc-card__subtitle">Ranked by the number of trains assigned</p>
+          </div>
+        </header>
+        <div class="rc-card__body">
+          {% if busiest_routes %}
+            <div class="rc-chart">
+              <div class="rc-chart__bars">
+                {% for row in busiest_routes %}
+                  <div class="rc-chart__bar">
+                    <span class="rc-chart__label" title="{{ row.route.route_name }}">
+                      {{ row.route.corridor }}
+                    </span>
+                    <span class="rc-chart__track">
+                      <span class="rc-chart__fill rc-chart__fill--info"
+                            data-rc-percent="{{ row.percent }}"
+                            role="img"
+                            aria-label="{{ row.route.route_name }}: {{ row.count }} train{{ row.count|pluralize }}"></span>
+                    </span>
+                    <span class="rc-chart__value">{{ row.count }}</span>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% else %}
+            <div class="rc-empty">
+              <div class="rc-empty__icon">{% rc_icon "route" %}</div>
+              <p class="rc-empty__title">No trains assigned</p>
+              <p class="rc-empty__text">Assign trains to routes to rank them by load.</p>
+            </div>
+          {% endif %}
+        </div>
+      </section>
+
+      {# ---- Network totals ------------------------------------------- #}
+      <section class="rc-card">
+        <header class="rc-card__header">
+          <div class="rc-card__titles">
+            <h2 class="rc-card__title">Network at a glance</h2>
+            <p class="rc-card__subtitle">Everything currently recorded in RailCore</p>
+          </div>
+        </header>
+        <div class="rc-card__body">
+          <dl class="rc-detail">
+            <div class="rc-detail__item">
+              <dt class="rc-detail__label">Stations</dt>
+              <dd class="rc-detail__value rc-tabular">{{ network.stations }}</dd>
+            </div>
+            <div class="rc-detail__item">
+              <dt class="rc-detail__label">Platforms</dt>
+              <dd class="rc-detail__value rc-tabular">{{ network.platforms }}</dd>
+            </div>
+            <div class="rc-detail__item">
+              <dt class="rc-detail__label">Routes</dt>
+              <dd class="rc-detail__value rc-tabular">{{ network.routes }}</dd>
+            </div>
+            <div class="rc-detail__item">
+              <dt class="rc-detail__label">Route halts</dt>
+              <dd class="rc-detail__value rc-tabular">{{ network.halts }}</dd>
+            </div>
+            <div class="rc-detail__item">
+              <dt class="rc-detail__label">Trains</dt>
+              <dd class="rc-detail__value rc-tabular">{{ network.trains }}</dd>
+            </div>
+            <div class="rc-detail__item">
+              <dt class="rc-detail__label">Schedules</dt>
+              <dd class="rc-detail__value rc-tabular">{{ network.schedules }}</dd>
+            </div>
+            <div class="rc-detail__item">
+              <dt class="rc-detail__label">Active route length</dt>
+              <dd class="rc-detail__value rc-tabular">{{ network.distance }} km</dd>
+            </div>
+            <div class="rc-detail__item">
+              <dt class="rc-detail__label">Coaches in service</dt>
+              <dd class="rc-detail__value rc-tabular">{{ network.coaches }}</dd>
+            </div>
+            <div class="rc-detail__item">
+              <dt class="rc-detail__label">Employees</dt>
+              <dd class="rc-detail__value rc-tabular">{{ network.employees }}</dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+    </div>
+  </div>
+{% endblock %}

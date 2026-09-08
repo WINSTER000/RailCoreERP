@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% load rc_tags %}
+
+{% block page_actions %}
+  <div class="rc-page__actions">
+    <a class="rc-btn rc-btn--secondary" href="{% url 'railway:train_list' %}">
+      {% rc_icon "chevron-left" "rc-icon rc-icon--sm" %}Working Fleet
+    </a>
+  </div>
+{% endblock %}
+
+{% block content %}
+  <section class="rc-card rc-card--flush">
+    <form class="rc-toolbar" method="get" role="search">
+      <div class="rc-toolbar__search">
+        <label class="rc-search">
+          <span class="rc-sr-only">Search archived trains</span>
+          {% rc_icon "search" "rc-icon rc-search__icon" %}
+          <input class="rc-search__input" type="search" name="q" value="{{ q }}"
+                 placeholder="Search by number, name or route" data-rc-search>
+        </label>
+
+        <div class="rc-toolbar__filters">
+          {% if q %}
+            <a class="rc-btn rc-btn--ghost rc-btn--sm" href="{% url 'railway:train_archive' %}">
+              {% rc_icon "close" "rc-icon rc-icon--sm" %}Clear
+            </a>
+          {% endif %}
+        </div>
+
+        <input type="hidden" name="sort" value="{{ request.GET.sort }}">
+        <input type="hidden" name="page" value="">
+        <noscript><button type="submit" class="rc-btn rc-btn--secondary rc-btn--sm">Apply</button></noscript>
+      </div>
+
+      <p class="rc-toolbar__meta">{{ total_count }} archived train{{ total_count|pluralize }}</p>
+    </form>
+
+    {% if trains %}
+      <div class="rc-table-wrap">
+        <table class="rc-table">
+          <caption class="rc-sr-only">Archived trains</caption>
+          <thead>
+            <tr>
+              {% rc_sort_header "train_number" "Train" %}
+              {% rc_sort_header "route__route_name" "Route" %}
+              {% rc_sort_header "total_coaches" "Coaches" "right" %}
+              {% rc_sort_header "status" "Status" "center" %}
+              <th scope="col" class="rc-th rc-th--right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for train in trains %}
+              <tr data-rc-href="{% url 'railway:train_detail' train.pk %}">
+                <td class="rc-td">
+                  <span class="rc-cell">
+                    <span class="rc-cell__primary">{{ train.train_number }}</span>
+                    <span class="rc-cell__secondary">{{ train.train_name }}</span>
+                  </span>
+                </td>
+                <td class="rc-td">
+                  <span class="rc-cell">
+                    <span class="rc-cell__primary">{{ train.route.route_name }}</span>
+                    <span class="rc-cell__secondary">Archived {{ train.updated_at|date:"d M Y" }}</span>
+                  </span>
+                </td>
+                <td class="rc-td rc-td--right rc-tabular">{{ train.total_coaches }}</td>
+                <td class="rc-td rc-td--center">{% rc_badge train.status %}</td>
+                <td class="rc-td rc-td--actions">
+                  <span class="rc-actions">
+                    <a class="rc-icon-btn rc-icon-btn--view" href="{% url 'railway:train_detail' train.pk %}"
+                       title="View {{ train.train_number }}" aria-label="View train {{ train.train_number }}">
+                      {% rc_icon "eye" %}
+                    </a>
+                    {% if can_restore %}
+                      <form method="post" action="{% url 'railway:train_restore' train.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="rc-icon-btn rc-icon-btn--restore"
+                                title="Restore {{ train.train_number }}"
+                                aria-label="Restore train {{ train.train_number }}">
+                          {% rc_icon "refresh" %}
+                        </button>
+                      </form>
+                    {% endif %}
+                  </span>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="rc-card__footer">
+        {% include "partials/_pagination.html" %}
+      </div>
+    {% else %}
+      <div class="rc-card__body">
+        {% if q %}
+          {% with empty_icon="search" empty_title="No archived trains match this search" empty_text="Try a different number, name or route." %}
+            {% include "partials/_empty_state.html" %}
+          {% endwith %}
+        {% else %}
+          {% url 'railway:train_list' as empty_cta %}
+          {% with empty_icon="check-circle" empty_title="Nothing in the archive" empty_text="Every registered train is still in the working fleet." empty_url=empty_cta empty_action="Working Fleet" %}
+            {% include "partials/_empty_state.html" %}
+          {% endwith %}
+        {% endif %}
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

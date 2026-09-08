@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% load rc_tags %}
+
+{% block page_actions %}
+  <div class="rc-page__actions">
+    <a class="rc-btn rc-btn--primary" href="{{ add_url }}">
+      {% rc_icon "plus" "rc-icon rc-icon--sm" %}Add Employee
+    </a>
+  </div>
+{% endblock %}
+
+{% block content %}
+  <section class="rc-card rc-card--flush">
+    <form class="rc-toolbar" method="get" role="search">
+      <div class="rc-toolbar__search">
+        <label class="rc-search">
+          <span class="rc-sr-only">Search employees</span>
+          {% rc_icon "search" "rc-icon rc-search__icon" %}
+          <input class="rc-search__input" type="search" name="q" value="{{ q }}"
+                 placeholder="Search by name, username or email" data-rc-search>
+        </label>
+
+        <div class="rc-toolbar__filters">
+          <label class="rc-filter">
+            <span class="rc-filter__label">Role</span>
+            <select class="rc-select" name="role" data-rc-autosubmit>
+              <option value="">All roles</option>
+              {% for value, label in role_options %}
+                <option value="{{ value }}" {% if role_filter == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </label>
+
+          <label class="rc-filter">
+            <span class="rc-filter__label">Status</span>
+            <select class="rc-select" name="status" data-rc-autosubmit>
+              <option value="">Active and inactive</option>
+              {% for value, label in status_options %}
+                <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </label>
+
+          {% if q or role_filter or status_filter %}
+            <a class="rc-btn rc-btn--ghost rc-btn--sm" href="{% url 'accounts:user_list' %}">
+              {% rc_icon "close" "rc-icon rc-icon--sm" %}Clear
+            </a>
+          {% endif %}
+        </div>
+
+        <input type="hidden" name="sort" value="{{ request.GET.sort }}">
+        <input type="hidden" name="page" value="">
+        <noscript><button type="submit" class="rc-btn rc-btn--secondary rc-btn--sm">Apply</button></noscript>
+      </div>
+
+      <p class="rc-toolbar__meta">{{ total_count }} employee{{ total_count|pluralize }}</p>
+    </form>
+
+    {% if users %}
+      <div class="rc-table-wrap">
+        <table class="rc-table">
+          <caption class="rc-sr-only">RailCore employee accounts</caption>
+          <thead>
+            <tr>
+              {% rc_sort_header "first_name" "Employee" %}
+              {% rc_sort_header "username" "Username" %}
+              {% rc_sort_header "role__name" "Role" %}
+              {% rc_sort_header "email" "Contact" %}
+              <th scope="col" class="rc-th rc-th--center">Status</th>
+              {% rc_sort_header "created_at" "Added" "right" %}
+              <th scope="col" class="rc-th rc-th--right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for account_row in users %}
+              <tr data-rc-href="{% url 'accounts:user_detail' account_row.pk %}">
+                <td class="rc-td">
+                  <span class="rc-cell rc-cell--avatar">
+                    <span class="rc-avatar rc-avatar--sm">
+                      {% if account_row.profile_image %}
+                        <img src="{{ account_row.profile_image.url }}" alt="Profile photo of {{ account_row.display_name }}">
+                      {% else %}
+                        {{ account_row.initials }}
+                      {% endif %}
+                    </span>
+                    <span class="rc-cell__text">
+                      <span class="rc-cell__primary">{{ account_row.display_name }}</span>
+                      <span class="rc-cell__secondary">{{ account_row.email|default:"No email on file" }}</span>
+                    </span>
+                  </span>
+                </td>
+                <td class="rc-td"><span class="rc-code">{{ account_row.username }}</span></td>
+                <td class="rc-td">{% rc_badge "PRIMARY" account_row.role_name %}</td>
+                <td class="rc-td">{{ account_row.phone|default:"—" }}</td>
+                <td class="rc-td rc-td--center">
+                  {% if account_row.is_deleted %}
+                    {% rc_badge "DANGER" "Deleted" %}
+                  {% elif account_row.is_active %}
+                    {% rc_badge "ACTIVE" %}
+                  {% else %}
+                    {% rc_badge "INACTIVE" %}
+                  {% endif %}
+                </td>
+                <td class="rc-td rc-td--right rc-tabular">{{ account_row.created_at|date:"d M Y" }}</td>
+                <td class="rc-td rc-td--actions">
+                  <span class="rc-actions">
+                    <a class="rc-icon-btn rc-icon-btn--view" href="{% url 'accounts:user_detail' account_row.pk %}"
+                       title="View {{ account_row.display_name }}" aria-label="View {{ account_row.display_name }}">
+                      {% rc_icon "eye" %}
+                    </a>
+                    {% if account_row.is_deleted %}
+                      <form method="post" action="{% url 'accounts:user_restore' account_row.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="rc-icon-btn rc-icon-btn--restore"
+                                title="Restore {{ account_row.display_name }}"
+                                aria-label="Restore {{ account_row.display_name }}">
+                          {% rc_icon "refresh" %}
+                        </button>
+                      </form>
+                    {% else %}
+                      <a class="rc-icon-btn rc-icon-btn--edit" href="{% url 'accounts:user_edit' account_row.pk %}"
+                         title="Edit {{ account_row.display_name }}" aria-label="Edit {{ account_row.display_name }}">
+                        {% rc_icon "edit" %}
+                      </a>
+                      {% if account_row.pk != request.user.pk %}
+                        <a class="rc-icon-btn rc-icon-btn--delete" href="{% url 'accounts:user_delete' account_row.pk %}"
+                           title="Deactivate {{ account_row.display_name }}"
+                           aria-label="Deactivate {{ account_row.display_name }}">
+                          {% rc_icon "trash" %}
+                        </a>
+                      {% endif %}
+                    {% endif %}
+                  </span>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="rc-card__footer">
+        {% include "partials/_pagination.html" %}
+      </div>
+    {% else %}
+      <div class="rc-card__body">
+        {% if q or role_filter or status_filter %}
+          {% with empty_icon="search" empty_title="No employees match this view" empty_text="Try a different search term, or clear the filters to see every account." %}
+            {% include "partials/_empty_state.html" %}
+          {% endwith %}
+        {% else %}
+          {% with empty_icon="users" empty_title="No employee accounts yet" empty_text="Issue a RailCore account so staff can sign in and work the network." empty_url=add_url empty_action="Add Employee" %}
+            {% include "partials/_empty_state.html" %}
+          {% endwith %}
+        {% endif %}
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

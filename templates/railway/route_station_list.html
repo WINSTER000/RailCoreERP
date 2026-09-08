@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% load rc_tags %}
+
+{% block page_actions %}
+  {% if rc_perms.route_stations.manage %}
+    <div class="rc-page__actions">
+      <a class="rc-btn rc-btn--primary" href="{% url 'railway:route_station_add' %}">
+        {% rc_icon "plus" "rc-icon rc-icon--sm" %}Add Route Station
+      </a>
+    </div>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  <section class="rc-card rc-card--flush">
+    <form class="rc-toolbar" method="get" role="search">
+      <div class="rc-toolbar__search">
+        <label class="rc-search">
+          <span class="rc-sr-only">Search route stations</span>
+          {% rc_icon "search" "rc-icon rc-search__icon" %}
+          <input class="rc-search__input" type="search" name="q" value="{{ q }}"
+                 placeholder="Search by route or station" data-rc-search>
+        </label>
+
+        <div class="rc-toolbar__filters">
+          <label class="rc-filter">
+            <span class="rc-filter__label">Route</span>
+            <select class="rc-select" name="route" data-rc-autosubmit>
+              <option value="">All routes</option>
+              {% for route in route_options %}
+                <option value="{{ route.pk }}" {% if route_filter == route.pk|stringformat:"s" %}selected{% endif %}>
+                  {{ route.route_name }}
+                </option>
+              {% endfor %}
+            </select>
+          </label>
+
+          <label class="rc-filter">
+            <span class="rc-filter__label">Station</span>
+            <select class="rc-select" name="station" data-rc-autosubmit>
+              <option value="">All stations</option>
+              {% for station in station_options %}
+                <option value="{{ station.pk }}" {% if station_filter == station.pk|stringformat:"s" %}selected{% endif %}>
+                  {{ station.station_code }} · {{ station.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </label>
+
+          {% if q or route_filter or station_filter %}
+            <a class="rc-btn rc-btn--ghost rc-btn--sm" href="{% url 'railway:route_station_list' %}">
+              {% rc_icon "close" "rc-icon rc-icon--sm" %}Clear
+            </a>
+          {% endif %}
+        </div>
+
+        <input type="hidden" name="sort" value="{{ request.GET.sort }}">
+        <input type="hidden" name="page" value="">
+        <noscript><button type="submit" class="rc-btn rc-btn--secondary rc-btn--sm">Apply</button></noscript>
+      </div>
+
+      <p class="rc-toolbar__meta">{{ total_count }} halt{{ total_count|pluralize }}</p>
+    </form>
+
+    {% if halts %}
+      <div class="rc-table-wrap">
+        <table class="rc-table">
+          <caption class="rc-sr-only">Route halts in running order</caption>
+          <thead>
+            <tr>
+              {% rc_sort_header "route__route_name" "Route" %}
+              {% rc_sort_header "sequence_number" "Stop" "center" %}
+              {% rc_sort_header "station__name" "Station" %}
+              {% rc_sort_header "arrival_offset" "Arrival" "right" %}
+              <th scope="col" class="rc-th rc-th--right">Departure</th>
+              <th scope="col" class="rc-th rc-th--right">Halt</th>
+              <th scope="col" class="rc-th rc-th--right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for halt in halts %}
+              <tr {% if rc_perms.routes.view %}data-rc-href="{% url 'railway:route_detail' halt.route.pk %}"{% endif %}>
+                <td class="rc-td">
+                  <span class="rc-cell">
+                    <span class="rc-cell__primary">{{ halt.route.route_name }}</span>
+                    <span class="rc-cell__secondary">{{ halt.route.corridor }}</span>
+                  </span>
+                </td>
+                <td class="rc-td rc-td--center rc-tabular">{{ halt.sequence_number }}</td>
+                <td class="rc-td">
+                  <span class="rc-cell">
+                    <span class="rc-cell__primary">{{ halt.station.name }}</span>
+                    <span class="rc-cell__secondary">{{ halt.station.station_code }} · {{ halt.station.city }}</span>
+                  </span>
+                </td>
+                <td class="rc-td rc-td--right rc-tabular">{{ halt.arrival_offset|offset_display }}</td>
+                <td class="rc-td rc-td--right rc-tabular">{{ halt.departure_offset|offset_display }}</td>
+                <td class="rc-td rc-td--right rc-tabular">
+                  {% if halt.halt_minutes %}{{ halt.halt_minutes }} min{% else %}<span class="rc-muted">Pass</span>{% endif %}
+                </td>
+                <td class="rc-td rc-td--actions">
+                  <span class="rc-actions">
+                    {% if rc_perms.routes.view %}
+                      <a class="rc-icon-btn rc-icon-btn--view" href="{% url 'railway:route_detail' halt.route.pk %}"
+                         title="View {{ halt.route.route_name }}" aria-label="View route {{ halt.route.route_name }}">
+                        {% rc_icon "eye" %}
+                      </a>
+                    {% endif %}
+                    {% if rc_perms.route_stations.manage %}
+                      <a class="rc-icon-btn rc-icon-btn--edit" href="{% url 'railway:route_station_edit' halt.pk %}"
+                         title="Edit halt" aria-label="Edit halt {{ halt.station.station_code }} on {{ halt.route.route_name }}">
+                        {% rc_icon "edit" %}
+                      </a>
+                      <a class="rc-icon-btn rc-icon-btn--delete" href="{% url 'railway:route_station_delete' halt.pk %}"
+                         title="Delete halt" aria-label="Delete halt {{ halt.station.station_code }} on {{ halt.route.route_name }}">
+                        {% rc_icon "trash" %}
+                      </a>
+                    {% endif %}
+                  </span>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="rc-card__footer">
+        {% include "partials/_pagination.html" %}
+      </div>
+    {% else %}
+      <div class="rc-card__body">
+        {% if q or route_filter or station_filter %}
+          {% with empty_icon="search" empty_title="No halts match this view" empty_text="Try a different search term, or clear the filters to see every halt." %}
+            {% include "partials/_empty_state.html" %}
+          {% endwith %}
+        {% else %}
+          {% if rc_perms.route_stations.manage %}{% url 'railway:route_station_add' as empty_cta %}{% endif %}
+          {% with empty_icon="map-pin" empty_title="No route halts yet" empty_text="Place stations on a route in running order to build its stopping pattern." empty_url=empty_cta empty_action="Add Route Station" %}
+            {% include "partials/_empty_state.html" %}
+          {% endwith %}
+        {% endif %}
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

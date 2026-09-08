@@ -1,0 +1,10 @@
+{% extends "railway/_form_shell.html" %}
+{% load rc_tags %}
+
+{% block fields %}
+  {% rc_field form.route_name "route" %}
+  {% rc_field form.total_distance "percent" %}
+  {% rc_field form.source_station "map-pin" %}
+  {% rc_field form.destination_station "map-pin" %}
+  {% rc_field form.is_active %}
+{% endblock %}

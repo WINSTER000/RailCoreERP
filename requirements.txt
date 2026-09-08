@@ -1,0 +1,28 @@
+# RailCore ERP - Python dependencies
+#
+# Install with:  pip install -r requirements.txt
+#
+# Core framework
+Django==5.2.17
+
+# Settings / environment variables
+django-environ==0.14.0
+dj-database-url==3.1.2
+
+# MySQL driver for local development.
+# Restricted to Windows/macOS because the Linux wheel is built from source and
+# needs the MySQL client headers, which are not present on Render. Render uses
+# PostgreSQL via DATABASE_URL and psycopg below. To develop on Linux with MySQL,
+# install the headers (`sudo apt install default-libmysqlclient-dev pkg-config`)
+# and then `pip install mysqlclient==2.2.8`.
+mysqlclient==2.2.8; sys_platform != "linux"
+
+# PostgreSQL driver used by the Render deployment
+psycopg[binary]==3.3.5
+
+# Production web server and static file serving
+gunicorn==26.2.0
+whitenoise==6.12.0
+
+# Image handling for user profile pictures
+pillow==12.3.0

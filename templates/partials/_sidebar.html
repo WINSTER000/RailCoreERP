@@ -1,0 +1,67 @@
+{% load rc_tags %}
+{% comment %}
+Primary navigation. ``nav_sections`` comes from accounts.context_processors.navigation
+and is already filtered to the modules the signed in role may view, so nothing here
+needs to test permissions again. ``active_nav`` is set by each view.
+{% endcomment %}
+<aside class="rc-sidebar" id="rc-sidebar">
+  <div class="rc-sidebar__top">
+    <a class="rc-sidebar__brand" href="{% url 'dashboard:home' %}">
+      <span class="rc-sidebar__logo">{% rc_icon "train" %}</span>
+      <span class="rc-sidebar__brand-text">
+        <span class="rc-sidebar__name">RailCore</span>
+        <span class="rc-sidebar__tag">ERP</span>
+      </span>
+    </a>
+    <button type="button" class="rc-sidebar__close" data-rc-sidebar-close>
+      {% rc_icon "close" "rc-icon rc-icon--sm" %}
+      <span class="rc-sr-only">Close navigation</span>
+    </button>
+  </div>
+
+  <nav class="rc-sidebar__nav" aria-label="Main navigation">
+    {% for section in nav_sections %}
+      <div class="rc-sidebar__section">
+        <p class="rc-sidebar__section-title">{{ section.title }}</p>
+        {% for item in section.items %}
+          <a
+            class="rc-sidebar__link{% if active_nav == item.key %} is-active{% endif %}"
+            href="{{ item.url }}"
+            {% if active_nav == item.key %}aria-current="page"{% endif %}
+            title="{{ item.label }}"
+          >
+            {% rc_icon item.icon "rc-sidebar__link-icon" %}
+            <span class="rc-sidebar__link-label">{{ item.label }}</span>
+            {% if item.key == "notifications" and unread_notification_count %}
+              <span class="rc-sidebar__count">{{ unread_notification_count }}</span>
+            {% endif %}
+          </a>
+        {% endfor %}
+      </div>
+    {% endfor %}
+  </nav>
+
+  <div class="rc-sidebar__footer">
+    <a class="rc-sidebar__user" href="{% url 'accounts:profile' %}" title="{{ user.display_name }}">
+      <span class="rc-user__avatar">
+        {% if user.profile_image %}
+          <img src="{{ user.profile_image.url }}" alt="">
+        {% else %}
+          {{ user.initials }}
+        {% endif %}
+      </span>
+      <span class="rc-user__meta">
+        <span class="rc-user__name">{{ user.display_name }}</span>
+        <span class="rc-user__role">{{ user.role_name }}</span>
+      </span>
+    </a>
+
+    <form class="rc-sidebar__logout" method="post" action="{% url 'accounts:logout' %}">
+      {% csrf_token %}
+      <button type="submit" title="Sign out">
+        {% rc_icon "logout" "rc-sidebar__link-icon" %}
+        <span>Sign out</span>
+      </button>
+    </form>
+  </div>
+</aside>

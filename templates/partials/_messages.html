@@ -1,0 +1,22 @@
+{% load rc_tags %}
+{% comment %}
+Django messages rendered as dismissible toasts. MESSAGE_TAGS maps ERROR to
+"danger", so a message's tag doubles as the CSS modifier. The JS auto-dismisses
+everything except danger; without JS the alerts simply stay until the next page
+load.
+{% endcomment %}
+{% if messages %}
+  <div class="rc-alerts" role="status" aria-live="polite">
+    {% for message in messages %}
+      {% if message.tags == "success" %}
+        {% with tone="success" icon="check-circle" heading="Success" %}{% include "partials/_alert.html" %}{% endwith %}
+      {% elif message.tags == "danger" %}
+        {% with tone="danger" icon="x-circle" heading="Error" %}{% include "partials/_alert.html" %}{% endwith %}
+      {% elif message.tags == "warning" %}
+        {% with tone="warning" icon="alert" heading="Warning" %}{% include "partials/_alert.html" %}{% endwith %}
+      {% else %}
+        {% with tone="info" icon="info" heading="Notice" %}{% include "partials/_alert.html" %}{% endwith %}
+      {% endif %}
+    {% endfor %}
+  </div>
+{% endif %}

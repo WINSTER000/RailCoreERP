@@ -1,0 +1,8 @@
+{% extends "railway/_form_shell.html" %}
+{% load rc_tags %}
+
+{% block fields %}
+  {% rc_field form.station "building" %}
+  {% rc_field form.platform_number "layers" %}
+  {% rc_field form.is_active %}
+{% endblock %}

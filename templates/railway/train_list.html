@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% load rc_tags %}
+
+{% block page_actions %}
+  <div class="rc-page__actions">
+    <a class="rc-btn rc-btn--secondary" href="{% url 'railway:train_archive' %}">
+      {% rc_icon "database" "rc-icon rc-icon--sm" %}Archive
+      {% if archived_count %}<span class="rc-chip">{{ archived_count }}</span>{% endif %}
+    </a>
+    {% if rc_perms.trains.manage %}
+      <a class="rc-btn rc-btn--primary" href="{% url 'railway:train_add' %}">
+        {% rc_icon "plus" "rc-icon rc-icon--sm" %}Add Train
+      </a>
+    {% endif %}
+  </div>
+{% endblock %}
+
+{% block content %}
+  <section class="rc-card rc-card--flush">
+    <form class="rc-toolbar" method="get" role="search">
+      <div class="rc-toolbar__search">
+        <label class="rc-search">
+          <span class="rc-sr-only">Search trains</span>
+          {% rc_icon "search" "rc-icon rc-search__icon" %}
+          <input class="rc-search__input" type="search" name="q" value="{{ q }}"
+                 placeholder="Search by number, name or route" data-rc-search>
+        </label>
+
+        <div class="rc-toolbar__filters">
+          <label class="rc-filter">
+            <span class="rc-filter__label">Status</span>
+            <select class="rc-select" name="status" data-rc-autosubmit>
+              <option value="">All</option>
+              {% for value, label in status_options %}
+                <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </label>
+
+          <label class="rc-filter">
+            <span class="rc-filter__label">Route</span>
+            <select class="rc-select" name="route" data-rc-autosubmit>
+              <option value="">All routes</option>
+              {% for route in route_options %}
+                <option value="{{ route.pk }}" {% if route_filter == route.pk|stringformat:"s" %}selected{% endif %}>
+                  {{ route.route_name }}
+                </option>
+              {% endfor %}
+            </select>
+          </label>
+
+          {% if q or status_filter or route_filter %}
+            <a class="rc-btn rc-btn--ghost rc-btn--sm" href="{% url 'railway:train_list' %}">
+              {% rc_icon "close" "rc-icon rc-icon--sm" %}Clear
+            </a>
+          {% endif %}
+        </div>
+
+        <input type="hidden" name="sort" value="{{ request.GET.sort }}">
+        <input type="hidden" name="page" value="">
+        <noscript><button type="submit" class="rc-btn rc-btn--secondary rc-btn--sm">Apply</button></noscript>
+      </div>
+
+      <p class="rc-toolbar__meta">
+        {{ total_count }} train{{ total_count|pluralize }} · {{ coach_total }} coach{{ coach_total|pluralize:"es" }}
+      </p>
+    </form>
+
+    {% if trains %}
+      <div class="rc-table-wrap">
+        <table class="rc-table">
+          <caption class="rc-sr-only">Trains in the working fleet</caption>
+          <thead>
+            <tr>
+              {% rc_sort_header "train_number" "Number" %}
+              {% rc_sort_header "train_name" "Train" %}
+              {% rc_sort_header "route__route_name" "Route" %}
+              {% rc_sort_header "total_coaches" "Coaches" "center" %}
+              {% rc_sort_header "status" "Status" "center" %}
+              <th scope="col" class="rc-th rc-th--right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for train in trains %}
+              <tr data-rc-href="{% url 'railway:train_detail' train.pk %}">
+                <td class="rc-td rc-td--tight">
+                  <span class="rc-code">{{ train.train_number }}</span>
+                </td>
+                <td class="rc-td">
+                  <span class="rc-cell">
+                    <span class="rc-cell__primary">{{ train.train_name }}</span>
+                    <span class="rc-cell__secondary">
+                      {{ train.schedule_count }} schedule{{ train.schedule_count|pluralize }} recorded
+                    </span>
+                  </span>
+                </td>
+                <td class="rc-td">
+                  <span class="rc-cell">
+                    <span class="rc-cell__primary">{{ train.route.route_name }}</span>
+                    <span class="rc-cell__secondary">{{ train.route.corridor }}</span>
+                  </span>
+                </td>
+                <td class="rc-td rc-td--center rc-tabular">{{ train.total_coaches }}</td>
+                <td class="rc-td rc-td--center">{% rc_badge train.status %}</td>
+                <td class="rc-td rc-td--actions">
+                  <span class="rc-actions">
+                    <a class="rc-icon-btn rc-icon-btn--view" href="{% url 'railway:train_detail' train.pk %}"
+                       title="View {{ train.train_number }}" aria-label="View train {{ train.train_number }}">
+                      {% rc_icon "eye" %}
+                    </a>
+                    {% if rc_perms.trains.manage %}
+                      <a class="rc-icon-btn rc-icon-btn--edit" href="{% url 'railway:train_edit' train.pk %}"
+                         title="Edit {{ train.train_number }}" aria-label="Edit train {{ train.train_number }}">
+                        {% rc_icon "edit" %}
+                      </a>
+                      <a class="rc-icon-btn rc-icon-btn--delete" href="{% url 'railway:train_delete' train.pk %}"
+                         title="Archive {{ train.train_number }}" aria-label="Archive train {{ train.train_number }}">
+                        {% rc_icon "trash" %}
+                      </a>
+                    {% endif %}
+                  </span>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="rc-card__footer">
+        {% include "partials/_pagination.html" %}
+      </div>
+    {% else %}
+      <div class="rc-card__body">
+        {% if q or status_filter or route_filter %}
+          {% with empty_icon="search" empty_title="No trains match this view" empty_text="Try a different search term, or clear the filters to see the whole fleet." %}
+            {% include "partials/_empty_state.html" %}
+          {% endwith %}
+        {% else %}
+          {% if rc_perms.trains.manage %}{% url 'railway:train_add' as empty_cta %}{% endif %}
+          {% with empty_icon="train" empty_title="No trains registered yet" empty_text="Register the first rake to start building the timetable." empty_url=empty_cta empty_action="Add Train" %}
+            {% include "partials/_empty_state.html" %}
+          {% endwith %}
+        {% endif %}
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

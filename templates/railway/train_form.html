@@ -1,0 +1,10 @@
+{% extends "railway/_form_shell.html" %}
+{% load rc_tags %}
+
+{% block fields %}
+  {% rc_field form.train_number "train" %}
+  {% rc_field form.train_name %}
+  {% rc_field form.route "route" %}
+  {% rc_field form.total_coaches "layers" %}
+  {% rc_field form.status %}
+{% endblock %}

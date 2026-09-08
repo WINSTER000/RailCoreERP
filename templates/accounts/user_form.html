@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% load rc_tags %}
+
+{% block page_actions %}
+  <div class="rc-page__actions">
+    <a class="rc-btn rc-btn--secondary" href="{{ cancel_url }}">
+      {% rc_icon "chevron-left" "rc-icon rc-icon--sm" %}All Employees
+    </a>
+  </div>
+{% endblock %}
+
+{% block content %}
+  <section class="rc-card rc-card--form rc-card--accent">
+    <header class="rc-card__header">
+      <div class="rc-card__titles">
+        <h2 class="rc-card__title">{{ form_title }}</h2>
+        <p class="rc-card__subtitle">{{ form_description }}</p>
+      </div>
+      {% if is_edit and user_obj %}
+        <div class="rc-card__actions">
+          {% if user_obj.is_deleted %}
+            {% rc_badge "DANGER" "Deleted" %}
+          {% elif user_obj.is_active %}
+            {% rc_badge "ACTIVE" %}
+          {% else %}
+            {% rc_badge "INACTIVE" %}
+          {% endif %}
+        </div>
+      {% endif %}
+    </header>
+
+    <form method="post" enctype="multipart/form-data" novalidate data-rc-guard>
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="rc-form-errors" role="alert">
+          {% for error in form.non_field_errors %}
+            <p class="rc-form-errors__item">
+              {% rc_icon "alert" "rc-icon rc-icon--sm" %}<span>{{ error }}</span>
+            </p>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="rc-card__body">
+        <div class="rc-form__grid">
+          {% rc_field form.username "user" %}
+          {% rc_field form.first_name "user" %}
+          {% rc_field form.last_name "user" %}
+          {% rc_field form.email "mail" %}
+          {% rc_field form.role "shield" %}
+          {% rc_field form.phone "phone" %}
+          {% if not is_edit %}
+            {% rc_field form.password1 "lock" %}
+            {% rc_field form.password2 "lock" %}
+          {% endif %}
+          {% rc_field form.profile_image "image" %}
+          {% rc_field form.is_active %}
+        </div>
+      </div>
+
+      <div class="rc-form__actions">
+        <a class="rc-btn rc-btn--secondary" href="{{ cancel_url }}">
+          {% rc_icon "close" "rc-icon rc-icon--sm" %}Cancel
+        </a>
+        <button type="submit" class="rc-btn rc-btn--primary">
+          {% rc_icon "save" "rc-icon rc-icon--sm" %}{{ submit_label|default:"Save" }}
+        </button>
+      </div>
+    </form>
+  </section>
+
+  {% if is_edit and user_obj %}
+    <section class="rc-card">
+      <header class="rc-card__header">
+        <div class="rc-card__titles">
+          <h2 class="rc-card__title">Account security</h2>
+          <p class="rc-card__subtitle">Passwords are stored hashed and cannot be read back.</p>
+        </div>
+      </header>
+      <div class="rc-card__body">
+        <dl class="rc-detail">
+          <div class="rc-detail__item">
+            <dt class="rc-detail__label">Username</dt>
+            <dd class="rc-detail__value"><span class="rc-code">{{ user_obj.username }}</span></dd>
+          </div>
+          <div class="rc-detail__item">
+            <dt class="rc-detail__label">Role</dt>
+            <dd class="rc-detail__value">{{ user_obj.role_name }}</dd>
+          </div>
+          <div class="rc-detail__item">
+            <dt class="rc-detail__label">Member since</dt>
+            <dd class="rc-detail__value">{{ user_obj.member_since|date:"d M Y" }}</dd>
+          </div>
+          <div class="rc-detail__item">
+            <dt class="rc-detail__label">Last updated</dt>
+            <dd class="rc-detail__value">{{ user_obj.updated_at|date:"d M Y, H:i" }}</dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+  {% endif %}
+{% endblock %}

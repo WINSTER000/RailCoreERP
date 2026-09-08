@@ -1,0 +1,105 @@
+{% load rc_tags %}
+{% comment %}
+Top bar: sidebar toggle, breadcrumb, notification dropdown and the user chip.
+``unread_notification_count`` and ``header_notifications`` come from
+notifications.context_processors.notification_badge.
+{% endcomment %}
+<header class="rc-header">
+  <div class="rc-header__left">
+    <button
+      type="button"
+      class="rc-header__toggle"
+      data-rc-sidebar-toggle
+      aria-controls="rc-sidebar"
+      aria-expanded="true"
+    >
+      {% rc_icon "menu" %}
+      <span class="rc-sr-only">Toggle navigation</span>
+    </button>
+
+    <nav class="rc-breadcrumb" aria-label="Breadcrumb">
+      <a class="rc-breadcrumb__item rc-hide-sm" href="{% url 'dashboard:home' %}">Dashboard</a>
+      {% if active_nav != "dashboard" %}
+        {% rc_icon "chevron-right" "rc-breadcrumb__sep rc-hide-sm" %}
+      {% endif %}
+      <span class="rc-breadcrumb__item">{{ page_title|default:"Workspace" }}</span>
+    </nav>
+  </div>
+
+  <div class="rc-header__right">
+    <div class="rc-header__bell">
+      <button
+        type="button"
+        class="rc-header__action"
+        data-rc-dropdown="rc-notif-menu"
+        aria-haspopup="true"
+        aria-expanded="false"
+      >
+        {% rc_icon "bell" %}
+        {% if unread_notification_count %}
+          <span class="rc-header__bell-count">{{ unread_notification_count }}</span>
+        {% endif %}
+        <span class="rc-sr-only">
+          Notifications{% if unread_notification_count %}, {{ unread_notification_count }} unread{% endif %}
+        </span>
+      </button>
+
+      <div class="rc-notif-menu" id="rc-notif-menu">
+        <div class="rc-notif-menu__head">
+          <span>Notifications</span>
+          {% if unread_notification_count %}
+            <span class="rc-badge rc-badge--danger">
+              <span class="rc-badge__dot"></span>{{ unread_notification_count }} unread
+            </span>
+          {% else %}
+            <span class="rc-badge rc-badge--success">
+              <span class="rc-badge__dot"></span>All read
+            </span>
+          {% endif %}
+        </div>
+
+        {% if header_notifications %}
+          <div class="rc-notif-menu__list">
+            {% for note in header_notifications %}
+              <a class="rc-notif-menu__item is-unread" href="{% url 'notifications:list' %}">
+                {% rc_icon note.icon "rc-icon rc-icon--sm" %}
+                <span>
+                  <span class="rc-notif-menu__title">{{ note.title }}</span>
+                  <span class="rc-notif-menu__meta">{{ note.created_at|timesince }} ago</span>
+                </span>
+              </a>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="rc-notif-menu__empty">Nothing new. Your queue is clear.</p>
+        {% endif %}
+
+        <a class="rc-notif-menu__foot" href="{% url 'notifications:list' %}">
+          View all notifications
+        </a>
+      </div>
+    </div>
+
+    <a class="rc-user" href="{% url 'accounts:profile' %}">
+      <span class="rc-user__avatar">
+        {% if user.profile_image %}
+          <img src="{{ user.profile_image.url }}" alt="">
+        {% else %}
+          {{ user.initials }}
+        {% endif %}
+      </span>
+      <span class="rc-user__meta">
+        <span class="rc-user__name">{{ user.display_name }}</span>
+        <span class="rc-user__role">{{ user.role_name }}</span>
+      </span>
+    </a>
+
+    <form method="post" action="{% url 'accounts:logout' %}">
+      {% csrf_token %}
+      <button type="submit" class="rc-header__action" title="Sign out">
+        {% rc_icon "logout" %}
+        <span class="rc-sr-only">Sign out</span>
+      </button>
+    </form>
+  </div>
+</header>

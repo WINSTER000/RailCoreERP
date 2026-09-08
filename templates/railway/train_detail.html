@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+{% load rc_tags %}
+
+{% block page_actions %}
+  <div class="rc-page__actions">
+    <a class="rc-btn rc-btn--secondary" href="{% url 'railway:train_list' %}">
+      {% rc_icon "chevron-left" "rc-icon rc-icon--sm" %}All Trains
+    </a>
+    {% if rc_perms.trains.manage %}
+      {% if train.is_deleted %}
+        <form method="post" action="{% url 'railway:train_restore' train.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="rc-btn rc-btn--success">
+            {% rc_icon "refresh" "rc-icon rc-icon--sm" %}Restore Train
+          </button>
+        </form>
+      {% else %}
+        {% if rc_perms.schedules.manage %}
+          <a class="rc-btn rc-btn--secondary" href="{% url 'railway:schedule_add' %}?train={{ train.pk }}">
+            {% rc_icon "calendar" "rc-icon rc-icon--sm" %}Schedule Run
+          </a>
+        {% endif %}
+        <a class="rc-btn rc-btn--primary" href="{% url 'railway:train_edit' train.pk %}">
+          {% rc_icon "edit" "rc-icon rc-icon--sm" %}Edit Train
+        </a>
+        <a class="rc-btn rc-btn--danger" href="{% url 'railway:train_delete' train.pk %}">
+          {% rc_icon "trash" "rc-icon rc-icon--sm" %}Archive
+        </a>
+      {% endif %}
+    {% endif %}
+  </div>
+{% endblock %}
+
+{% block content %}
+  {% if train.is_deleted %}
+    <div class="rc-alert rc-alert--warning" role="status">
+      {% rc_icon "ban" "rc-icon rc-alert__icon" %}
+      <div class="rc-alert__body">
+        <p class="rc-alert__title">This train is archived</p>
+        <p class="rc-alert__text">It no longer appears in the working fleet or in the dashboard counts. Its schedules and history are kept for reporting.</p>
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="rc-stats">
+    <div class="rc-stat">
+      <div class="rc-stat__top">
+        <span class="rc-stat__icon rc-stat__icon--primary">{% rc_icon "layers" %}</span>
+      </div>
+      <p class="rc-stat__value">{{ train.total_coaches }}</p>
+      <p class="rc-stat__label">Coaches</p>
+      <p class="rc-stat__meta">In the rake formation</p>
+    </div>
+    <div class="rc-stat">
+      <div class="rc-stat__top">
+        <span class="rc-stat__icon rc-stat__icon--info">{% rc_icon "calendar" %}</span>
+      </div>
+      <p class="rc-stat__value">{{ schedule_count }}</p>
+      <p class="rc-stat__label">Total Runs</p>
+      <p class="rc-stat__meta">Recorded in the timetable</p>
+    </div>
+    <div class="rc-stat">
+      <div class="rc-stat__top">
+        <span class="rc-stat__icon rc-stat__icon--success">{% rc_icon "clock" %}</span>
+      </div>
+      <p class="rc-stat__value">{{ upcoming_count }}</p>
+      <p class="rc-stat__label">Upcoming Runs</p>
+      <p class="rc-stat__meta">Departing from now on</p>
+    </div>
+    <div class="rc-stat">
+      <div class="rc-stat__top">
+        <span class="rc-stat__icon rc-stat__icon--danger">{% rc_icon "calendar-x" %}</span>
+      </div>
+      <p class="rc-stat__value">{{ cancelled_count }}</p>
+      <p class="rc-stat__label">Cancelled Runs</p>
+      <p class="rc-stat__meta">Kept on record</p>
+    </div>
+  </div>
+
+  <section class="rc-card rc-card--accent">
+    <header class="rc-card__header">
+      <div class="rc-card__titles">
+        <h2 class="rc-card__title">Train details</h2>
+        <p class="rc-card__subtitle">Registration and route assignment</p>
+      </div>
+      <div class="rc-card__actions">
+        {% rc_badge train.status %}
+      </div>
+    </header>
+    <div class="rc-card__body">
+      <dl class="rc-detail">
+        <div class="rc-detail__item">
+          <dt class="rc-detail__label">Train number</dt>
+          <dd class="rc-detail__value"><span class="rc-code">{{ train.train_number }}</span></dd>
+        </div>
+        <div class="rc-detail__item">
+          <dt class="rc-detail__label">Train name</dt>
+          <dd class="rc-detail__value">{{ train.train_name }}</dd>
+        </div>
+        <div class="rc-detail__item">
+          <dt class="rc-detail__label">Route</dt>
+          <dd class="rc-detail__value">
+            {% if rc_perms.routes.view %}
+              <a href="{% url 'railway:route_detail' train.route.pk %}">{{ train.route.route_name }}</a>
+            {% else %}
+              {{ train.route.route_name }}
+            {% endif %}
+          </dd>
+        </div>
+        <div class="rc-detail__item">
+          <dt class="rc-detail__label">Corridor</dt>
+          <dd class="rc-detail__value">{{ train.route.corridor }}</dd>
+        </div>
+        <div class="rc-detail__item">
+          <dt class="rc-detail__label">Distance</dt>
+          <dd class="rc-detail__value rc-tabular">{{ train.route.total_distance }} km</dd>
+        </div>
+        <div class="rc-detail__item">
+          <dt class="rc-detail__label">Origin</dt>
+          <dd class="rc-detail__value">{{ train.route.source_station.name }} ({{ train.route.source_station.station_code }})</dd>
+        </div>
+        <div class="rc-detail__item">
+          <dt class="rc-detail__label">Destination</dt>
+          <dd class="rc-detail__value">{{ train.route.destination_station.name }} ({{ train.route.destination_station.station_code }})</dd>
+        </div>
+        <div class="rc-detail__item">
+          <dt class="rc-detail__label">Registered</dt>
+          <dd class="rc-detail__value">{{ train.created_at|date:"d M Y, H:i" }}</dd>
+        </div>
+        <div class="rc-detail__item">
+          <dt class="rc-detail__label">Last updated</dt>
+          <dd class="rc-detail__value">{{ train.updated_at|date:"d M Y, H:i" }}</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <div class="rc-grid rc-grid--split">
+    <section class="rc-card rc-card--flush">
+      <header class="rc-card__header">
+        <div class="rc-card__titles">
+          <h2 class="rc-card__title">Recent runs</h2>
+          <p class="rc-card__subtitle">The last ten dated runs for this train</p>
+        </div>
+        {% if rc_perms.schedules.view %}
+          <div class="rc-card__actions">
+            <a class="rc-btn rc-btn--ghost rc-btn--sm" href="{% url 'railway:schedule_list' %}?train={{ train.pk }}">
+              {% rc_icon "list" "rc-icon rc-icon--sm" %}View all
+            </a>
+          </div>
+        {% endif %}
+      </header>
+
+      {% if schedules %}
+        <div class="rc-table-wrap">
+          <table class="rc-table">
+            <caption class="rc-sr-only">Recent runs of train {{ train.train_number }}</caption>
+            <thead>
+              <tr>
+                <th scope="col" class="rc-th">Departure</th>
+                <th scope="col" class="rc-th">Platform</th>
+                <th scope="col" class="rc-th rc-th--right">Delay</th>
+                <th scope="col" class="rc-th rc-th--center">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for schedule in schedules %}
+                <tr {% if rc_perms.schedules.view %}data-rc-href="{% url 'railway:schedule_detail' schedule.pk %}"{% endif %}>
+                  <td class="rc-td">
+                    <span class="rc-cell">
+                      <span class="rc-cell__primary">{{ schedule.departure_datetime|date:"d M Y, H:i" }}</span>
+                      <span class="rc-cell__secondary">Arrives {{ schedule.arrival_datetime|date:"d M, H:i" }}</span>
+                    </span>
+                  </td>
+                  <td class="rc-td">
+                    <span class="rc-cell">
+                      <span class="rc-cell__primary">{{ schedule.platform.station.station_code }}</span>
+                      <span class="rc-cell__secondary">{{ schedule.platform.label }}</span>
+                    </span>
+                  </td>
+                  <td class="rc-td rc-td--right rc-tabular">{{ schedule.delay_minutes|minutes_display }}</td>
+                  <td class="rc-td rc-td--center">{% rc_badge schedule.display_status %}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="rc-card__body">
+          {% if rc_perms.schedules.manage %}{% url 'railway:schedule_add' as schedule_base %}{% endif %}
+          {% if schedule_base %}
+            {% with train_query=train.pk|stringformat:"s" %}
+              {% with empty_cta=schedule_base|add:"?train="|add:train_query %}
+                {% with empty_icon="calendar" empty_title="No runs scheduled yet" empty_text="Book this train onto a platform to put it in the timetable." empty_url=empty_cta empty_action="Schedule Run" %}
+                  {% include "partials/_empty_state.html" %}
+                {% endwith %}
+              {% endwith %}
+            {% endwith %}
+          {% else %}
+            {% with empty_icon="calendar" empty_title="No runs scheduled yet" empty_text="This train has not been booked onto a platform." %}
+              {% include "partials/_empty_state.html" %}
+            {% endwith %}
+          {% endif %}
+        </div>
+      {% endif %}
+    </section>
+
+    <section class="rc-card">
+      <header class="rc-card__header">
+        <div class="rc-card__titles">
+          <h2 class="rc-card__title">Halts on this route</h2>
+          <p class="rc-card__subtitle">{{ halts|length }} stop{{ halts|length|pluralize }} in running order</p>
+        </div>
+      </header>
+      <div class="rc-card__body">
+        {% if halts %}
+          <ol class="rc-timeline">
+            {% for halt in halts %}
+              <li class="rc-timeline__item">
+                <span class="rc-timeline__marker" aria-hidden="true">{{ halt.sequence_number }}</span>
+                <div class="rc-timeline__body">
+                  <p class="rc-timeline__title">{{ halt.station.name }} ({{ halt.station.station_code }})</p>
+                  <p class="rc-timeline__meta">
+                    <span>Arrives {{ halt.arrival_offset|offset_display }}</span>
+                    <span>Departs {{ halt.departure_offset|offset_display }}</span>
+                    {% if halt.halt_minutes %}<span>{{ halt.halt_minutes }} min halt</span>{% endif %}
+                  </p>
+                </div>
+              </li>
+            {% endfor %}
+          </ol>
+        {% else %}
+          {% with empty_icon="map-pin" empty_title="No halts defined" empty_text="This route runs point to point, or its halts have not been entered yet." %}
+            {% include "partials/_empty_state.html" %}
+          {% endwith %}
+        {% endif %}
+      </div>
+    </section>
+  </div>
+{% endblock %}

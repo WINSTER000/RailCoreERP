@@ -1,0 +1,46 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="RailCore ERP - railway operations management for stations, routes, trains and schedules.">
+  <title>{% block title %}{{ page_title|default:"Workspace" }} · RailCore ERP{% endblock %}</title>
+  <link rel="icon" type="image/svg+xml" href="{% static 'images/favicon.svg' %}">
+  <link rel="stylesheet" href="{% static 'css/railcore.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  {% include "partials/_icons.html" %}
+
+  <a class="rc-skip" href="#rc-main">Skip to main content</a>
+
+  <div class="rc-shell">
+    {% include "partials/_sidebar.html" %}
+
+    <div class="rc-overlay" data-rc-overlay></div>
+
+    <div class="rc-main">
+      {% include "partials/_header.html" %}
+
+      {% include "partials/_messages.html" %}
+
+      <main class="rc-content" id="rc-main" tabindex="-1">
+        <div class="rc-page__header">
+          <div class="rc-page__heading">
+            <h1 class="rc-page__title">{{ page_title|default:"Workspace" }}</h1>
+            {% if page_subtitle %}
+              <p class="rc-page__subtitle">{{ page_subtitle }}</p>
+            {% endif %}
+          </div>
+          {% block page_actions %}{% endblock %}
+        </div>
+
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+
+  <script src="{% static 'js/railcore.js' %}"></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

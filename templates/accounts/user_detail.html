@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% load rc_tags %}
+
+{% block page_actions %}
+  <div class="rc-page__actions">
+    <a class="rc-btn rc-btn--secondary" href="{% url 'accounts:user_list' %}">
+      {% rc_icon "chevron-left" "rc-icon rc-icon--sm" %}All Employees
+    </a>
+    {% if account.is_deleted %}
+      <form method="post" action="{% url 'accounts:user_restore' account.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="rc-btn rc-btn--primary">
+          {% rc_icon "refresh" "rc-icon rc-icon--sm" %}Restore Account
+        </button>
+      </form>
+    {% else %}
+      <a class="rc-btn rc-btn--primary" href="{% url 'accounts:user_edit' account.pk %}">
+        {% rc_icon "edit" "rc-icon rc-icon--sm" %}Edit Employee
+      </a>
+      {% if account.pk != request.user.pk %}
+        <a class="rc-btn rc-btn--danger" href="{% url 'accounts:user_delete' account.pk %}">
+          {% rc_icon "trash" "rc-icon rc-icon--sm" %}Deactivate
+        </a>
+      {% endif %}
+    {% endif %}
+  </div>
+{% endblock %}
+
+{% block content %}
+  {% if account.is_deleted %}
+    <div class="rc-alert rc-alert--danger" role="status">
+      {% rc_icon "ban" "rc-icon rc-alert__icon" %}
+      <div class="rc-alert__body">
+        <p class="rc-alert__title">This account has been deactivated</p>
+        <p class="rc-alert__text">It cannot sign in. The record and its audit trail are kept, and the account can be restored.</p>
+      </div>
+    </div>
+  {% elif not account.is_active %}
+    <div class="rc-alert rc-alert--warning" role="status">
+      {% rc_icon "lock" "rc-icon rc-alert__icon" %}
+      <div class="rc-alert__body">
+        <p class="rc-alert__title">Sign in is switched off</p>
+        <p class="rc-alert__text">The account exists but is marked inactive, so RailCore will refuse the login.</p>
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="rc-profile">
+    <div class="rc-profile__hero">
+      <span class="rc-profile__avatar">
+        {% if account.profile_image %}
+          <img src="{{ account.profile_image.url }}" alt="Profile photo of {{ account.display_name }}">
+        {% else %}
+          {{ account.initials }}
+        {% endif %}
+      </span>
+      <div class="rc-profile__id">
+        <p class="rc-profile__name">{{ account.display_name }}</p>
+        <div class="rc-profile__role">
+          {% rc_badge "PRIMARY" account.role_name %}
+          {% if account.is_deleted %}
+            {% rc_badge "DANGER" "Deleted" %}
+          {% elif account.is_active %}
+            {% rc_badge "ACTIVE" %}
+          {% else %}
+            {% rc_badge "INACTIVE" %}
+          {% endif %}
+        </div>
+        <div class="rc-profile__meta">
+          <span>{% rc_icon "user" "rc-icon rc-icon--xs" %}@{{ account.username }}</span>
+          <span>{% rc_icon "mail" "rc-icon rc-icon--xs" %}{{ account.email|default:"No email on file" }}</span>
+          <span>{% rc_icon "phone" "rc-icon rc-icon--xs" %}{{ account.phone|default:"No phone on file" }}</span>
+          <span>{% rc_icon "history" "rc-icon rc-icon--xs" %}Member since {{ account.member_since|date:"d M Y" }}</span>
+        </div>
+      </div>
+    </div>
+
+    <section class="rc-card rc-card--accent">
+      <header class="rc-card__header">
+        <div class="rc-card__titles">
+          <h2 class="rc-card__title">Account record</h2>
+          <p class="rc-card__subtitle">Details held against this employee</p>
+        </div>
+      </header>
+      <div class="rc-card__body">
+        <dl class="rc-detail">
+          <div class="rc-detail__item">
+            <dt class="rc-detail__label">Username</dt>
+            <dd class="rc-detail__value"><span class="rc-code">{{ account.username }}</span></dd>
+          </div>
+          <div class="rc-detail__item">
+            <dt class="rc-detail__label">Full name</dt>
+            <dd class="rc-detail__value">{{ account.full_name|default:"Not recorded" }}</dd>
+          </div>
+          <div class="rc-detail__item">
+            <dt class="rc-detail__label">Role</dt>
+            <dd class="rc-detail__value">{{ account.role_name }}</dd>
+          </div>
+          <div class="rc-detail__item">
+            <dt class="rc-detail__label">Email</dt>
+            <dd class="rc-detail__value">{{ account.email|default:"Not recorded" }}</dd>
+          </div>
+          <div class="rc-detail__item">
+            <dt class="rc-detail__label">Phone</dt>
+            <dd class="rc-detail__value">{{ account.phone|default:"Not recorded" }}</dd>
+          </div>
+          <div class="rc-detail__item">
+            <dt class="rc-detail__label">Notifications</dt>
+            <dd class="rc-detail__value">{{ notification_count }} total · {{ unread_count }} unread</dd>
+          </div>
+          <div class="rc-detail__item">
+            <dt class="rc-detail__label">Created</dt>
+            <dd class="rc-detail__value">{{ account.created_at|date:"d M Y, H:i" }}</dd>
+          </div>
+          <div class="rc-detail__item">
+            <dt class="rc-detail__label">Last updated</dt>
+            <dd class="rc-detail__value">{{ account.updated_at|date:"d M Y, H:i" }}</dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+
+    <div class="rc-grid rc-grid--split">
+      <section class="rc-card rc-card--flush">
+        <header class="rc-card__header">
+          <div class="rc-card__titles">
+            <h2 class="rc-card__title">What this role allows</h2>
+            <p class="rc-card__subtitle">Access granted by {{ account.role_name }}</p>
+          </div>
+        </header>
+        <div class="rc-table-wrap">
+          <table class="rc-table">
+            <caption class="rc-sr-only">Module access for {{ account.role_name }}</caption>
+            <thead>
+              <tr>
+                <th scope="col" class="rc-th">Module</th>
+                <th scope="col" class="rc-th rc-th--center">Access</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in capabilities %}
+                <tr>
+                  <td class="rc-td">{{ row.label }}</td>
+                  <td class="rc-td rc-td--center">
+                    {% if row.can_manage %}
+                      {% rc_badge "SUCCESS" row.access_label %}
+                    {% elif row.can_view %}
+                      {% rc_badge "INFO" row.access_label %}
+                    {% else %}
+                      {% rc_badge "NEUTRAL" row.access_label %}
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="rc-card">
+        <header class="rc-card__header">
+          <div class="rc-card__titles">
+            <h2 class="rc-card__title">Recent activity</h2>
+            <p class="rc-card__subtitle">The last actions recorded against this account</p>
+          </div>
+          {% if rc_perms.activity_logs.view %}
+            <div class="rc-card__actions">
+              <a class="rc-btn rc-btn--ghost rc-btn--sm" href="{% url 'activity_logs:list' %}?user={{ account.pk }}">
+                {% rc_icon "history" "rc-icon rc-icon--sm" %}Full log
+              </a>
+            </div>
+          {% endif %}
+        </header>
+        <div class="rc-card__body">
+          {% if recent_activity %}
+            <ul class="rc-feed">
+              {% for entry in recent_activity %}
+                <li class="rc-feed__item">
+                  <span class="rc-feed__icon rc-feed__icon--{{ entry.action|badge_tone }}">{% rc_icon entry.icon %}</span>
+                  <div class="rc-feed__body">
+                    <p class="rc-feed__text">{{ entry.description|default:entry.target }}</p>
+                    <p class="rc-feed__meta">
+                      <span>{{ entry.get_action_display }}</span>
+                      <span>{{ entry.created_at|date:"d M Y, H:i" }}</span>
+                    </p>
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            {% with empty_icon="activity" empty_title="No activity yet" empty_text="Actions taken with this account will be listed here." %}
+              {% include "partials/_empty_state.html" %}
+            {% endwith %}
+          {% endif %}
+        </div>
+      </section>
+    </div>
+  </div>
+{% endblock %}

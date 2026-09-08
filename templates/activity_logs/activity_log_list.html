@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% load rc_tags %}
+
+{% block content %}
+  <div class="rc-grid rc-grid--split">
+    <section class="rc-card">
+      <header class="rc-card__header">
+        <div class="rc-card__titles">
+          <h2 class="rc-card__title">Actions in this view</h2>
+          <p class="rc-card__subtitle">How the {{ total_count }} matching entr{{ total_count|pluralize:"y,ies" }} break down</p>
+        </div>
+      </header>
+      <div class="rc-card__body">
+        {% if total_count %}
+          <div class="rc-chart">
+            <div class="rc-chart__bars">
+              {% for row in action_summary %}
+                <div class="rc-chart__bar">
+                  <span class="rc-chart__label">{{ row.label }}</span>
+                  <span class="rc-chart__track">
+                    <span class="rc-chart__fill rc-chart__fill--{{ row.action|badge_tone }}"
+                          data-rc-percent="{{ row.percent }}"
+                          role="img"
+                          aria-label="{{ row.label }}: {{ row.count }} entr{{ row.count|pluralize:'y,ies' }}"></span>
+                  </span>
+                  <span class="rc-chart__value">{{ row.count }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        {% else %}
+          {% with empty_icon="activity" empty_title="Nothing to summarise" empty_text="No audit entries match the filters currently applied." %}
+            {% include "partials/_empty_state.html" %}
+          {% endwith %}
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="rc-card">
+      <header class="rc-card__header">
+        <div class="rc-card__titles">
+          <h2 class="rc-card__title">About the audit trail</h2>
+          <p class="rc-card__subtitle">What RailCore records and why</p>
+        </div>
+      </header>
+      <div class="rc-card__body">
+        <div class="rc-status-list">
+          <div class="rc-status-item">
+            <span class="rc-status-item__label">
+              {% rc_icon "plus" "rc-icon rc-icon--sm" %}Record created
+            </span>
+            <span class="rc-status-item__value">Logged</span>
+          </div>
+          <div class="rc-status-item">
+            <span class="rc-status-item__label">
+              {% rc_icon "edit" "rc-icon rc-icon--sm" %}Record edited
+            </span>
+            <span class="rc-status-item__value">Logged</span>
+          </div>
+          <div class="rc-status-item">
+            <span class="rc-status-item__label">
+              {% rc_icon "trash" "rc-icon rc-icon--sm" %}Record deleted or archived
+            </span>
+            <span class="rc-status-item__value">Logged</span>
+          </div>
+          <div class="rc-status-item">
+            <span class="rc-status-item__label">
+              {% rc_icon "login" "rc-icon rc-icon--sm" %}Sign in and sign out
+            </span>
+            <span class="rc-status-item__value">Logged</span>
+          </div>
+          <div class="rc-status-item">
+            <span class="rc-status-item__label">
+              {% rc_icon "shield" "rc-icon rc-icon--sm" %}Entries are read only
+            </span>
+            <span class="rc-status-item__value">Always</span>
+          </div>
+        </div>
+        <p class="rc-card__note">
+          Each entry keeps the employee who acted, even after their account is deactivated.
+        </p>
+      </div>
+    </section>
+  </div>
+
+  <section class="rc-card rc-card--flush">
+    <form class="rc-toolbar" method="get" role="search">
+      <div class="rc-toolbar__search">
+        <label class="rc-search">
+          <span class="rc-sr-only">Search the audit trail</span>
+          {% rc_icon "search" "rc-icon rc-search__icon" %}
+          <input class="rc-search__input" type="search" name="q" value="{{ q }}"
+                 placeholder="Search by description, record type or employee" data-rc-search>
+        </label>
+
+        <div class="rc-toolbar__filters">
+          <label class="rc-filter">
+            <span class="rc-filter__label">Action</span>
+            <select class="rc-select" name="action" data-rc-autosubmit>
+              <option value="">All actions</option>
+              {% for value, label in action_options %}
+                <option value="{{ value }}" {% if action_filter == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </label>
+
+          <label class="rc-filter">
+            <span class="rc-filter__label">Employee</span>
+            <select class="rc-select" name="user" data-rc-autosubmit>
+              <option value="">All employees</option>
+              {% for actor in user_options %}
+                <option value="{{ actor.pk }}" {% if user_filter == actor.pk|stringformat:"s" %}selected{% endif %}>
+                  {{ actor.display_name }}
+                </option>
+              {% endfor %}
+            </select>
+          </label>
+
+          {% if q or action_filter or user_filter %}
+            <a class="rc-btn rc-btn--ghost rc-btn--sm" href="{% url 'activity_logs:list' %}">
+              {% rc_icon "close" "rc-icon rc-icon--sm" %}Clear
+            </a>
+          {% endif %}
+        </div>
+
+        <input type="hidden" name="sort" value="{{ request.GET.sort }}">
+        <input type="hidden" name="page" value="">
+        <noscript><button type="submit" class="rc-btn rc-btn--secondary rc-btn--sm">Apply</button></noscript>
+      </div>
+
+      <p class="rc-toolbar__meta">{{ total_count }} entr{{ total_count|pluralize:"y,ies" }}</p>
+    </form>
+
+    {% if logs %}
+      <div class="rc-table-wrap">
+        <table class="rc-table">
+          <caption class="rc-sr-only">RailCore audit trail</caption>
+          <thead>
+            <tr>
+              {% rc_sort_header "created_at" "When" %}
+              {% rc_sort_header "user__first_name" "Employee" %}
+              {% rc_sort_header "action" "Action" "center" %}
+              {% rc_sort_header "model_name" "Record" %}
+              <th scope="col" class="rc-th">Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for log in logs %}
+              <tr>
+                <td class="rc-td">
+                  <span class="rc-cell">
+                    <span class="rc-cell__primary rc-tabular">{{ log.created_at|date:"d M Y" }}</span>
+                    <span class="rc-cell__secondary rc-tabular">{{ log.created_at|date:"H:i:s" }}</span>
+                  </span>
+                </td>
+                <td class="rc-td">
+                  <span class="rc-cell rc-cell--avatar">
+                    <span class="rc-avatar rc-avatar--sm">{{ log.actor_initials }}</span>
+                    <span class="rc-cell__text">
+                      <span class="rc-cell__primary">{{ log.actor_name }}</span>
+                      <span class="rc-cell__secondary">
+                        {% if log.user %}@{{ log.user.username }}{% else %}Automated{% endif %}
+                      </span>
+                    </span>
+                  </span>
+                </td>
+                <td class="rc-td rc-td--center">{% rc_badge log.action %}</td>
+                <td class="rc-td">
+                  {% if log.model_name %}
+                    <span class="rc-cell">
+                      <span class="rc-cell__primary">{{ log.model_name }}</span>
+                      {% if log.object_id %}
+                        <span class="rc-cell__secondary">#{{ log.object_id }}</span>
+                      {% endif %}
+                    </span>
+                  {% else %}
+                    <span class="rc-muted">Session</span>
+                  {% endif %}
+                </td>
+                <td class="rc-td">{{ log.description|default:log.target }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="rc-card__footer">
+        {% include "partials/_pagination.html" %}
+      </div>
+    {% else %}
+      <div class="rc-card__body">
+        {% if q or action_filter or user_filter %}
+          {% with empty_icon="search" empty_title="No entries match this view" empty_text="Try a different search term, or clear the filters to see the whole trail." %}
+            {% include "partials/_empty_state.html" %}
+          {% endwith %}
+        {% else %}
+          {% with empty_icon="history" empty_title="The audit trail is empty" empty_text="Sign ins and record changes will be listed here as employees work." %}
+            {% include "partials/_empty_state.html" %}
+          {% endwith %}
+        {% endif %}
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

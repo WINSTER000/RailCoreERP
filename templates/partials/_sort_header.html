@@ -1,0 +1,5 @@
+{% load rc_tags %}<th scope="col" class="rc-th rc-th--sortable rc-th--{{ align }}" aria-sort="{% if state == 'asc' %}ascending{% elif state == 'desc' %}descending{% else %}none{% endif %}">
+  <a class="rc-th__sort{% if state != 'none' %} is-active{% endif %}" href="{{ url }}">
+    <span>{{ label }}</span>{% rc_icon icon "rc-icon rc-icon--xs rc-th__icon" %}
+  </a>
+</th>

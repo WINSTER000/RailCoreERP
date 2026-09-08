@@ -1,0 +1,18 @@
+{% load rc_tags %}
+{% comment %}
+Shown in place of a table body when a list has no rows. Include inside a
+{% with %} that supplies ``empty_icon``, ``empty_title``, ``empty_text`` and
+optionally ``empty_url`` / ``empty_action`` for the call-to-action button.
+{% endcomment %}
+<div class="rc-empty">
+  <div class="rc-empty__icon">{% rc_icon empty_icon|default:"inbox" %}</div>
+  <p class="rc-empty__title">{{ empty_title|default:"Nothing here yet" }}</p>
+  <p class="rc-empty__text">{{ empty_text|default:"No records match the current view." }}</p>
+  {% if empty_url and empty_action %}
+    <div class="rc-empty__actions">
+      <a class="rc-btn rc-btn--primary" href="{{ empty_url }}">
+        {% rc_icon "plus" "rc-icon rc-icon--sm" %}{{ empty_action }}
+      </a>
+    </div>
+  {% endif %}
+</div>

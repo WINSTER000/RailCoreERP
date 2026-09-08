@@ -1,0 +1,29 @@
+{% load rc_tags %}{% if field|is_checkbox %}
+<div class="rc-field rc-field--switch{% if field.errors %} is-invalid{% endif %}">
+  <label class="rc-switch" for="{{ field.id_for_label }}">
+    {{ field }}
+    <span class="rc-switch__track" aria-hidden="true"><span class="rc-switch__thumb"></span></span>
+    <span class="rc-switch__body">
+      <span class="rc-switch__label">{{ field.label }}</span>
+      {% if field.help_text %}<span class="rc-field__help">{{ field.help_text }}</span>{% endif %}
+    </span>
+  </label>
+  {% for error in field.errors %}
+    <p class="rc-field__error" role="alert">{% rc_icon "alert" "rc-icon rc-icon--xs" %}<span>{{ error }}</span></p>
+  {% endfor %}
+</div>
+{% else %}
+<div class="rc-field{% if field.errors %} is-invalid{% endif %}{% if field|is_textarea %} rc-field--wide{% endif %}">
+  <label class="rc-field__label" for="{{ field.id_for_label }}">
+    {{ field.label }}{% if field.field.required %}<span class="rc-field__required" aria-hidden="true">*</span><span class="rc-sr-only">(required)</span>{% endif %}
+  </label>
+  <div class="rc-field__control{% if icon %} rc-field__control--icon{% endif %}">
+    {% if icon %}{% rc_icon icon "rc-icon rc-field__icon" %}{% endif %}
+    {{ field }}
+  </div>
+  {% if field.help_text %}<p class="rc-field__help">{{ field.help_text }}</p>{% endif %}
+  {% for error in field.errors %}
+    <p class="rc-field__error" role="alert">{% rc_icon "alert" "rc-icon rc-icon--xs" %}<span>{{ error }}</span></p>
+  {% endfor %}
+</div>
+{% endif %}
