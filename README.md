@@ -1,277 +1,334 @@
-# RailCore ERP
+# 🚆 RailCore ERP
 
-A Railway Enterprise Resource Planning system built with Django 5.2. RailCore ERP gives
-railway staff a single console for managing the network — stations and platforms, routes
-and their halts, trains and their daily schedules — with role-based access control, an
-audit trail of every change, and an operations dashboard driven entirely by live data.
+<p align="center">
+  <strong>A modern Railway Enterprise Resource Planning system built with Django.</strong><br>
+  Centralized railway operations management with role-based access control, live dashboards, notifications, and a complete audit trail.
+</p>
 
----
-
-## Table of contents
-
-1. [Overview](#overview)
-2. [Features](#features)
-3. [Technology stack](#technology-stack)
-4. [Project structure](#project-structure)
-5. [Installation](#installation)
-6. [Environment variables](#environment-variables)
-7. [Database setup](#database-setup)
-8. [Running the application](#running-the-application)
-9. [Sample data and demo accounts](#sample-data-and-demo-accounts)
-10. [Roles and permissions](#roles-and-permissions)
-11. [Application URLs](#application-urls)
-12. [Running the tests](#running-the-tests)
-13. [Deploying to Render](#deploying-to-render)
-14. [Command reference](#command-reference)
+<p align="center">
+  <a href="https://github.com/WINSTER000/RailCoreERP"><img src="https://img.shields.io/badge/GitHub-RailCoreERP-181717?logo=github" alt="GitHub"></a>
+  <img src="https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/Django-5.2-092E20?logo=django&logoColor=white" alt="Django">
+  <img src="https://img.shields.io/badge/Database-MySQL%20%7C%20PostgreSQL-4479A1?logo=mysql&logoColor=white" alt="Database">
+  <img src="https://img.shields.io/badge/Frontend-HTML%20%7C%20CSS%20%7C%20JavaScript-F7DF1E?logo=javascript&logoColor=black" alt="Frontend">
+  <img src="https://img.shields.io/badge/Deployment-Render-46E3B7?logo=render&logoColor=black" alt="Render">
+</p>
 
 ---
 
-## Overview
+## 📌 Overview
 
-RailCore ERP models the core operational data of a railway network and the workflows
-around it:
+**RailCore ERP** is a web-based Railway Enterprise Resource Planning system designed to provide railway staff with a single platform for managing core railway operations.
 
-* **Network** — stations, the platforms at each station, and the routes that connect
-  them, including the ordered list of halts (route stations) that make up each route
-  with arrival and departure offsets from the origin.
-* **Operations** — trains assigned to routes, and the schedules that place a train on a
-  specific platform at a specific date and time, with delay tracking and cancellation.
-* **Governance** — four staff roles with distinct capabilities, a full activity log of
-  every create/update/delete/login/logout, and in-app notifications when something
-  operationally significant happens.
+The system centralizes:
 
-Everything on screen is read from the database. There are no hardcoded figures, no
-placeholder pages and no stubbed features.
+- 🚆 Train management
+- 🛤️ Route and route-station management
+- 🏢 Station and platform management
+- 📅 Train schedules and operational status
+- 👥 Staff accounts and role-based permissions
+- 🔔 In-app notifications
+- 📝 Activity and audit logs
+- 📊 Live operations dashboard
 
----
-
-## Features
-
-**Authentication and accounts**
-
-* Session-based login and logout with Django's password hashing (PBKDF2).
-* Custom user model with role, phone number and profile photo.
-* Self-service profile editing and password change.
-* Admin-only user management with soft delete and restore.
-* Login/logout are recorded in the activity log automatically via signals.
-
-**Role-based access control**
-
-* Four roles — Admin, Railway Manager, Station Manager, Operations Staff.
-* Per-module view/manage capabilities enforced by decorators on every view.
-* The sidebar only shows modules the signed-in user may open, and action buttons are
-  hidden when the user lacks write access.
-* Unauthorised access renders a styled 403 page explaining the restriction.
-
-**Master data management (full CRUD on all six entities)**
-
-| Module | Create | Read | List | Update | Delete |
-|---|---|---|---|---|---|
-| Trains | ✓ | ✓ | ✓ | ✓ | soft delete + archive/restore |
-| Routes | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Schedules | ✓ | ✓ | ✓ | ✓ | ✓ (plus cancel/reinstate) |
-| Stations | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Platforms | ✓ | — | ✓ | ✓ | ✓ |
-| Route stations | ✓ | — | ✓ | ✓ | ✓ |
-
-Every list view supports search, filtering, column sorting and pagination. Every
-destructive action goes through a confirmation page — nothing is ever deleted on a
-`GET` request. Records protected by foreign keys report a clear message instead of
-raising an error.
-
-**Validation**
-
-* Unique train number, unique station code, unique route name.
-* Platform numbers unique within a station.
-* Halt sequence numbers unique within a route, and a station cannot appear twice on
-  the same route.
-* Positive coach counts (1–30), non-negative route distance.
-* Arrival must be after departure; a platform cannot be double-booked by two
-  overlapping schedules; departure offset cannot precede arrival offset at a halt.
-* Enforced at both the database level (unique constraints) and the form level, so
-  duplicates surface as readable field errors.
-
-**Operations dashboard**
-
-* Six live statistic cards — active stations, total trains, active trains, active
-  routes, today's schedules and cancelled schedules.
-* A seven-day schedule volume chart, a train status breakdown, route load ranking and a
-  punctuality summary, all computed with ORM aggregates and rendered as CSS/SVG (no
-  charting library, no external requests).
-* Recent activity feed, real system status rows, and quick actions filtered by role.
-
-**Activity log and notifications**
-
-* Every create, update and delete writes an `ActivityLog` row with the actor, model,
-  object id and a human description.
-* Notifications are raised for schedule cancellations, delays, trains entering
-  maintenance, stations being deactivated and new accounts; the unread count appears in
-  the header and sidebar, with a dedicated inbox page.
-
-**Interface**
-
-* Custom design system — a single stylesheet, a single script, and an inline SVG icon
-  sprite. No Bootstrap, no Font Awesome, no CDN, no web fonts: the app renders
-  identically offline and on a fresh server.
-* Collapsible sidebar, sticky table headers, status badges that always carry a text
-  label, empty states on every module, toast-style messages.
-* Responsive from desktop down to mobile; the sidebar becomes an off-canvas drawer
-  below 992px.
-* Accessible: labelled inputs, `aria-label` on icon-only controls, visible focus rings,
-  semantic tables, and `prefers-reduced-motion` support.
+The application is built with **Django 5.2**, uses a database-driven architecture, and includes configuration for deployment on **Render**.
 
 ---
 
-## Technology stack
+## ✨ Key Features
+
+### 🔐 Authentication & User Management
+
+- Secure Django authentication
+- Custom user model
+- Profile management
+- Password change
+- Admin-only user management
+- Soft delete and restore for users
+- Login/logout activity tracking
+
+### 🛡️ Role-Based Access Control
+
+RailCore ERP supports four operational roles:
+
+| Role | Purpose |
+|---|---|
+| **Admin** | Full system access and user management |
+| **Railway Manager** | Manages trains, routes and operational data |
+| **Station Manager** | Manages stations, platforms and schedules |
+| **Operations Staff** | Handles day-to-day operational activities |
+
+Permissions are enforced at the view level, and the interface dynamically hides modules and actions that a user cannot access.
+
+### 🚆 Railway Operations
+
+- Complete train CRUD
+- Train status and maintenance tracking
+- Route creation and management
+- Ordered route halts/stations
+- Station management
+- Platform management
+- Schedule creation and editing
+- Schedule cancellation and reinstatement
+- Delay tracking
+- Platform conflict validation
+
+### 📊 Operations Dashboard
+
+The dashboard provides live operational information including:
+
+- Active stations
+- Total and active trains
+- Active routes
+- Today's schedules
+- Cancelled schedules
+- Seven-day schedule volume
+- Train status breakdown
+- Route load ranking
+- Punctuality information
+- Recent activity
+- System status
+- Role-aware quick actions
+
+### 🔔 Notifications & Audit Trail
+
+Operationally important events generate notifications, including:
+
+- Schedule cancellations
+- Delays
+- Train maintenance events
+- Station deactivation
+- New user accounts
+
+The activity log records important actions with the responsible user, affected object and action description.
+
+### 🎨 Custom Interface
+
+- Custom CSS design system
+- Responsive layout
+- Collapsible sidebar
+- Sticky table headers
+- Search and filtering
+- Sorting and pagination
+- Status badges
+- Confirmation pages for destructive actions
+- Toast messages
+- Accessible form controls
+- No Bootstrap, Font Awesome, external fonts or CDN dependencies
+
+---
+
+# 🖥️ Screenshots
+
+## 🔑 Login
+
+<p align="center">
+  <img src="screenshots/login.png" alt="RailCore ERP Login" width="100%">
+</p>
+
+The login interface provides a clean entry point for authenticated railway staff.
+
+---
+
+## 📊 Dashboard
+
+<p align="center">
+  <img src="screenshots/dashboard.png" alt="RailCore ERP Dashboard" width="100%">
+</p>
+
+The operations dashboard presents live railway statistics, schedule information, train status, route activity, punctuality data and recent system activity.
+
+---
+
+## 🛤️ Routes
+
+<p align="center">
+  <img src="screenshots/routes.png" alt="RailCore ERP Routes" width="100%">
+</p>
+
+Routes can be searched, filtered, sorted and managed through the railway operations interface.
+
+---
+
+## 📍 Route Stations
+
+<p align="center">
+  <img src="screenshots/route-stations.png" alt="RailCore ERP Route Stations" width="100%">
+</p>
+
+Route stations define the ordered halts that make up each railway route.
+
+---
+
+## 📅 Schedules
+
+<p align="center">
+  <img src="screenshots/schedules.png" alt="RailCore ERP Schedules" width="100%">
+</p>
+
+Schedules connect trains, routes, stations and platforms to specific operating dates and times.
+
+---
+
+## 🚆 Trains
+
+<p align="center">
+  <img src="screenshots/trains.png" alt="RailCore ERP Trains" width="100%">
+</p>
+
+The train management module provides operational information, status tracking and administrative actions.
+
+---
+
+## 🏗️ Platforms
+
+<p align="center">
+  <img src="screenshots/platforms.png" alt="RailCore ERP Platforms" width="100%">
+</p>
+
+Platforms are managed per station and are used when assigning schedules to railway operations.
+
+---
+
+## 🏢 Stations
+
+<p align="center">
+  <img src="screenshots/stations.png" alt="RailCore ERP Stations" width="100%">
+</p>
+
+The station module provides centralized management of railway stations and their operational status.
+
+---
+
+## 👥 Users
+
+<p align="center">
+  <img src="screenshots/users.png" alt="RailCore ERP Users" width="100%">
+</p>
+
+Administrators can manage staff accounts, roles and account status from the user management module.
+
+---
+
+## 🔔 Notifications
+
+<p align="center">
+  <img src="screenshots/notifications.png" alt="RailCore ERP Notifications" width="100%">
+</p>
+
+The notification inbox keeps staff informed about important operational events.
+
+---
+
+## 📝 Activity Log
+
+<p align="center">
+  <img src="screenshots/activity-log.png" alt="RailCore ERP Activity Log" width="100%">
+</p>
+
+The activity log provides an audit trail of important system actions and operational changes.
+
+---
+
+# 🧰 Technology Stack
 
 | Layer | Technology |
 |---|---|
 | Language | Python 3.10+ |
-| Framework | Django 5.2 (Django ORM, Django Templates, ModelForms) |
-| Database | MySQL 8 / MariaDB 10.6+ locally, PostgreSQL on Render |
-| Frontend | HTML5, CSS3 (custom design system), vanilla JavaScript |
-| Settings | django-environ, dj-database-url |
-| Images | Pillow |
-| Production | Gunicorn, WhiteNoise |
-| Hosting | Render |
+| Framework | Django 5.2 |
+| ORM | Django ORM |
+| Templates | Django Templates |
+| Frontend | HTML5, CSS3, Vanilla JavaScript |
+| Local Database | MySQL 8 / MariaDB 10.6+ |
+| Production Database | PostgreSQL |
+| Configuration | django-environ, dj-database-url |
+| Image Processing | Pillow |
+| Production Server | Gunicorn |
+| Static Files | WhiteNoise |
+| Deployment | Render |
 
 ---
 
-## Project structure
+# 🗂️ Project Structure
 
-```
+```text
 RailCoreERP/
-├── config/                     Project configuration
-│   ├── settings.py             Env-driven settings (dev + production)
-│   ├── urls.py                 Root URL configuration
-│   ├── wsgi.py  asgi.py
-├── accounts/                   Users, roles, authentication, RBAC
-│   ├── models.py               Role, User (AbstractUser)
-│   ├── permissions.py          Module capability matrix + view decorators
-│   ├── context_processors.py   Sidebar navigation + permission map
-│   ├── signals.py              Login/logout activity logging
-│   ├── forms.py  views.py  urls.py  admin.py  factories.py  tests.py
-├── dashboard/                  Aggregated operations dashboard
-│   └── views.py  urls.py  tests.py
-├── railway/                    Core railway domain
-│   ├── models.py               Station, Platform, Route, RouteStation, Train, Schedule
-│   ├── forms.py                ModelForms with validation
-│   ├── views.py                CRUD for all six entities
-│   ├── utils.py                Search, sort and pagination helpers
-│   ├── templatetags/rc_tags.py Icons, badges, fields, sortable headers
-│   ├── management/commands/seed_data.py
-│   ├── tests/                  Per-entity test modules
-│   └── urls.py  admin.py  factories.py
-├── notifications/              In-app notifications
-│   ├── models.py  services.py  context_processors.py  views.py  urls.py  admin.py
-├── activity_logs/              Audit trail
-│   ├── models.py  services.py  views.py  urls.py  admin.py
-├── templates/                  All templates (project-level)
-│   ├── base.html               Authenticated app shell
-│   ├── base_public.html        Login and error page shell
-│   ├── 403.html  404.html  500.html
-│   ├── partials/               Sidebar, header, messages, pagination, fields, icons
-│   ├── accounts/  dashboard/  railway/  notifications/  activity_logs/
-├── static/
-│   ├── css/railcore.css        The complete design system
-│   ├── js/railcore.js          Sidebar, dropdowns, alerts, filters
-│   └── images/
-├── media/                      Uploaded profile photos (git-ignored)
-├── build.sh                    Render build script
-├── Procfile                    Gunicorn process definition
-├── render.yaml                 Render blueprint (web service + PostgreSQL)
-├── requirements.txt
-├── .env.example                Template for local environment variables
-└── manage.py
+├── accounts/                  # Users, roles, authentication and RBAC
+├── activity_logs/             # Audit trail
+├── config/                    # Django project configuration
+├── dashboard/                 # Operations dashboard
+├── notifications/             # In-app notifications
+├── railway/                   # Stations, platforms, routes, trains, schedules
+├── static/                    # CSS, JavaScript and images
+├── templates/                 # Django templates
+├── build.sh                   # Render build script
+├── Procfile                   # Gunicorn process definition
+├── render.yaml                # Render deployment configuration
+├── requirements.txt           # Python dependencies
+├── .env.example               # Environment variable template
+└── manage.py                  # Django management entry point
 ```
 
 ---
 
-## Installation
+# 🚀 Installation
 
-### 1. Clone and enter the project
+## 1. Clone the repository
 
 ```bash
-git clone <your-repository-url>
+git clone https://github.com/WINSTER000/RailCoreERP.git
 cd RailCoreERP
 ```
 
-### 2. Create and activate a virtual environment
+## 2. Create a virtual environment
 
-Windows (PowerShell or Git Bash):
+### Windows
 
 ```bash
 python -m venv venv
-venv/Scripts/activate
+venv\Scripts\activate
 ```
 
-macOS / Linux:
+### macOS / Linux
 
 ```bash
 python3 -m venv venv
 source venv/bin/activate
 ```
 
-### 3. Install dependencies
+## 3. Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-> On Linux, `mysqlclient` is skipped by default because it must be compiled against the
-> MySQL client headers. If you want to use MySQL locally on Linux, run
-> `sudo apt install default-libmysqlclient-dev pkg-config` and then
-> `pip install mysqlclient==2.2.8`. Alternatively set `DB_ENGINE=sqlite`.
+## 4. Configure environment variables
 
-### 4. Create your environment file
+Copy the example environment file:
 
 ```bash
 cp .env.example .env
 ```
 
-Then edit `.env` and set at minimum a `SECRET_KEY` and your database credentials.
+On Windows, you can also create `.env` manually from `.env.example`.
+
+At minimum, configure your Django `SECRET_KEY` and database settings.
 
 ---
 
-## Environment variables
+# 🗄️ Database Setup
 
-`.env` is read by `django-environ` and is git-ignored — it must never be committed.
+RailCore ERP supports MySQL/MariaDB, PostgreSQL and SQLite.
 
-| Variable | Required | Default | Purpose |
-|---|---|---|---|
-| `SECRET_KEY` | yes in production | dev fallback when `DEBUG=True` | Django cryptographic signing key |
-| `DEBUG` | no | `False` | Enables debug mode. Must be `False` in production |
-| `ALLOWED_HOSTS` | no | `localhost,127.0.0.1,[::1],testserver` | Comma-separated allowed hostnames |
-| `TIME_ZONE` | no | `Asia/Kolkata` | Application timezone |
-| `LOG_LEVEL` | no | `INFO` | Console logging level |
-| `RAILCORE_PAGE_SIZE` | no | `10` | Rows per page in every list view |
-| `DB_ENGINE` | no | `mysql` | `mysql`, `postgresql` or `sqlite` |
-| `DB_NAME` | no | `railcore` | Database name |
-| `DB_USER` | no | `root` | Database user |
-| `DB_PASSWORD` | no | empty | Database password |
-| `DB_HOST` | no | `127.0.0.1` | Database host |
-| `DB_PORT` | no | `3306` | Database port |
-| `DATABASE_URL` | no | — | Full connection URL. **Overrides every `DB_*` variable**; this is what Render supplies |
-| `SECURE_SSL_REDIRECT` | no | `True` when `DEBUG=False` | Force HTTPS |
-| `CSRF_TRUSTED_ORIGINS` | no | — | Extra trusted origins for CSRF |
+### MySQL
 
-Production hardening (secure cookies, HSTS, SSL redirect, `X-Frame-Options: DENY`,
-no-sniff headers) switches on automatically whenever `DEBUG=False`. No credentials or
-secret keys are stored in the repository.
-
----
-
-## Database setup
-
-### MySQL / MariaDB (default for local development)
-
-```bash
-mysql -u root -p -e "CREATE DATABASE railcore CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+```sql
+CREATE DATABASE railcore CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-Set the matching values in `.env`:
+Example `.env` configuration:
 
-```
+```env
 DB_ENGINE=mysql
 DB_NAME=railcore
 DB_USER=root
@@ -282,7 +339,7 @@ DB_PORT=3306
 
 ### PostgreSQL
 
-```
+```env
 DB_ENGINE=postgresql
 DB_NAME=railcore
 DB_USER=postgres
@@ -291,13 +348,15 @@ DB_HOST=127.0.0.1
 DB_PORT=5432
 ```
 
-### SQLite (zero setup, useful for a quick look or for running the tests)
+### SQLite
 
-```
+For a quick local setup:
+
+```env
 DB_ENGINE=sqlite
 ```
 
-### Apply the migrations
+Then run migrations:
 
 ```bash
 python manage.py migrate
@@ -305,209 +364,242 @@ python manage.py migrate
 
 ---
 
-## Running the application
+# ▶️ Run the Application
+
+Create an administrator:
 
 ```bash
 python manage.py createsuperuser
+```
+
+Start the development server:
+
+```bash
 python manage.py runserver
 ```
 
-Open <http://127.0.0.1:8000/> — you will be redirected to the login page. The Django
-admin is available at <http://127.0.0.1:8000/admin/>.
+Open:
 
-To load the sample dataset instead of starting from an empty database, see the next
-section.
+```text
+http://127.0.0.1:8000/
+```
+
+Django admin:
+
+```text
+http://127.0.0.1:8000/admin/
+```
 
 ---
 
-## Sample data and demo accounts
+# 🌱 Sample Data
+
+RailCore ERP includes a seed command for quickly populating a realistic railway dataset:
 
 ```bash
 python manage.py seed_data
 ```
 
-This creates the four roles, seven demo staff accounts, fifteen real Indian stations
-(fourteen active) with their platforms, seven routes (six active) with ordered halts,
-fourteen trains (one archived), and forty-five schedules spread across the past two days,
-today and the next two days, plus a notification inbox and activity history — so every
-screen and every dashboard figure has meaningful data.
+The seed command creates sample roles, staff accounts, Indian railway stations, platforms, routes, trains, schedules, notifications and activity history.
 
-The command is idempotent: running it again updates the existing records rather than
-creating duplicates. To wipe the seeded data and start over:
+To reset the seeded dataset:
 
 ```bash
 python manage.py seed_data --flush
 ```
 
-The exact credentials are printed at the end of the run. The accounts created are:
+### Demo Accounts
 
-| Username | Name | Role | Password |
-|---|---|---|---|
-| `admin` | Winster Lobo | Admin (superuser) | `RailCore@1234` |
-| `rmanager` | Arman Ali | Railway Manager | `RailCore@1234` |
-| `rmanager2` | Owais Khatri | Railway Manager | `RailCore@1234` |
-| `smanager` | Sameera Dream | Station Manager | `RailCore@1234` |
-| `smanager2` | Maya Dream | Station Manager | `RailCore@1234` |
-| `opsstaff` | Meera DY | Operations Staff | `RailCore@1234` |
-| `opsstaff2` | Jace Dream | Operations Staff | `RailCore@1234` |
+| Username | Role | Password |
+|---|---|---|
+| `admin` | Admin | `RailCore@1234` |
+| `rmanager` | Railway Manager | `RailCore@1234` |
+| `rmanager2` | Railway Manager | `RailCore@1234` |
+| `smanager` | Station Manager | `RailCore@1234` |
+| `smanager2` | Station Manager | `RailCore@1234` |
+| `opsstaff` | Operations Staff | `RailCore@1234` |
+| `opsstaff2` | Operations Staff | `RailCore@1234` |
 
-Sign in as each one to see how the sidebar, action buttons and permissions change.
-
-> These are development credentials for the sample dataset. Change them, or avoid
-> running `seed_data` at all, on any deployment that is publicly reachable.
+> ⚠️ These credentials are intended for development/demo data. Change them or avoid running the seed command on a publicly accessible deployment.
 
 ---
 
-## Roles and permissions
+# 🛡️ Role & Permission Matrix
 
 | Module | Admin | Railway Manager | Station Manager | Operations Staff |
 |---|---|---|---|---|
-| Dashboard | full | view | view | view |
-| Trains | full | full | — | view |
-| Routes | full | full | — | view |
-| Schedules | full | full | view | full |
-| Stations | full | view | full | view |
-| Platforms | full | view | full | view |
-| Route stations | full | view | full | view |
-| Activity log | view | view | — | — |
-| User management | full | — | — | — |
-| Notifications / Profile | full | full | full | full |
+| Dashboard | Full | View | View | View |
+| Trains | Full | Full | — | View |
+| Routes | Full | Full | — | View |
+| Schedules | Full | Full | View | Full |
+| Stations | Full | View | Full | View |
+| Platforms | Full | View | Full | View |
+| Route Stations | Full | View | Full | View |
+| Activity Log | View | View | — | — |
+| User Management | Full | — | — | — |
+| Notifications / Profile | Full | Full | Full | Full |
 
-"full" means create, edit and delete; "view" means read-only; "—" means the module is
-hidden from the sidebar and returns a 403 page if accessed directly.
+**Full** = create, edit and delete  
+**View** = read-only access  
+**—** = module hidden and protected from direct access
 
 ---
 
-## Application URLs
+# 🧪 Testing
+
+Run the complete test suite:
+
+```bash
+python manage.py test
+```
+
+Useful checks:
+
+```bash
+python manage.py check
+```
+
+Run a specific test module:
+
+```bash
+python manage.py test railway.tests.test_schedule
+```
+
+---
+
+# ☁️ Deployment on Render
+
+The repository includes Render deployment configuration through `render.yaml` and `build.sh`.
+
+### Blueprint deployment
+
+1. Push the project to GitHub.
+2. Open Render.
+3. Choose **New → Blueprint**.
+4. Select the `RailCoreERP` repository.
+5. Render provisions the web service and PostgreSQL database from the blueprint.
+6. The build process installs dependencies, collects static files and applies migrations.
+7. Gunicorn starts the Django application.
+
+### Manual deployment
+
+**Build command:**
+
+```bash
+./build.sh
+```
+
+**Start command:**
+
+```bash
+gunicorn config.wsgi:application
+```
+
+Typical production environment variables:
+
+```env
+SECRET_KEY=your-production-secret
+DEBUG=False
+DATABASE_URL=your-render-postgresql-url
+PYTHON_VERSION=3.12.6
+```
+
+> ⚠️ Do not commit real passwords, secret keys or production database credentials to GitHub.
+
+---
+
+# 📍 Important URLs
 
 | URL | Purpose |
 |---|---|
-| `/` | Redirects to the dashboard |
-| `/accounts/login/` | Sign in |
-| `/accounts/logout/` | Sign out (POST) |
-| `/accounts/profile/` | Own profile and recent activity |
-| `/accounts/profile/password/` | Change password |
-| `/accounts/users/` | User management (Admin only) |
+| `/` | Dashboard redirect |
+| `/accounts/login/` | Login |
+| `/accounts/profile/` | User profile |
+| `/accounts/users/` | User management |
 | `/dashboard/` | Operations dashboard |
-| `/railway/trains/` | Train list |
-| `/railway/trains/add/` | Add train |
-| `/railway/trains/<id>/` | Train details |
-| `/railway/trains/<id>/edit/` | Edit train |
-| `/railway/trains/<id>/delete/` | Delete train (confirmation) |
-| `/railway/trains/archive/` | Soft-deleted trains, with restore |
-| `/railway/routes/` | Route list (`add/`, `<id>/`, `<id>/edit/`, `<id>/delete/`) |
-| `/railway/schedules/` | Schedule list (`add/`, `<id>/`, `<id>/edit/`, `<id>/delete/`, `<id>/cancel/`) |
-| `/railway/stations/` | Station list (`add/`, `<id>/`, `<id>/edit/`, `<id>/delete/`) |
-| `/railway/platforms/` | Platform list (`add/`, `<id>/edit/`, `<id>/delete/`) |
-| `/railway/route-stations/` | Route station list (`add/`, `<id>/edit/`, `<id>/delete/`) |
+| `/railway/trains/` | Train management |
+| `/railway/routes/` | Route management |
+| `/railway/schedules/` | Schedule management |
+| `/railway/stations/` | Station management |
+| `/railway/platforms/` | Platform management |
+| `/railway/route-stations/` | Route-station management |
 | `/notifications/` | Notification inbox |
-| `/activity/` | Activity log (Admin and Railway Manager) |
+| `/activity/` | Activity log |
 | `/admin/` | Django administration |
 
 ---
 
-## Running the tests
+# 🔒 Security Highlights
 
-```bash
-python manage.py test
-```
-
-The suite covers authentication, role authorisation (including the 403 responses), CRUD
-for all six entities, every validation rule, soft delete and restore, duplicate
-prevention, schedule date/time and platform-clash validation, cancellation,
-dashboard statistics and activity log generation.
-
-Run a single module or class:
-
-```bash
-python manage.py test railway.tests.test_schedule
-python manage.py test accounts.tests.LoginViewTests
-```
-
-The tests run against whichever database `.env` points at, and pass on MySQL,
-PostgreSQL and SQLite. For the fastest run, use `DB_ENGINE=sqlite`.
+- Django password hashing
+- Session-based authentication
+- Role-based authorization
+- CSRF protection
+- Secure cookies in production
+- HTTPS redirect in production
+- HSTS support
+- `X-Frame-Options: DENY`
+- Content sniffing protection
+- Environment-based secret management
+- Database-level and form-level validation
 
 ---
 
-## Deploying to Render
+# 📈 Validation & Data Integrity
 
-### Option A — Blueprint (recommended)
+RailCore ERP validates important railway constraints such as:
 
-The repository contains `render.yaml`, which defines the web service and a managed
-PostgreSQL database together.
-
-1. Push the repository to GitHub.
-2. In Render, choose **New → Blueprint** and select the repository.
-3. Render creates `railcore-db` and `railcore-erp`, generates a `SECRET_KEY`, wires
-   `DATABASE_URL` to the database, and sets `DEBUG=False`.
-4. Apply the blueprint. The build runs `build.sh`, which installs dependencies,
-   collects static files and applies migrations. The service then starts with
-   `gunicorn config.wsgi:application`.
-
-### Option B — Manual web service
-
-1. **New → Web Service**, connect the repository, choose the Python runtime.
-2. Build command: `./build.sh`
-3. Start command: `gunicorn config.wsgi:application`
-4. Add these environment variables:
-
-   | Key | Value |
-   |---|---|
-   | `SECRET_KEY` | a long random string |
-   | `DEBUG` | `False` |
-   | `DATABASE_URL` | the internal connection string of a Render PostgreSQL instance |
-   | `PYTHON_VERSION` | `3.12.6` |
-
-5. Deploy, then open a shell on the service and create your first administrator:
-
-   ```bash
-   python manage.py createsuperuser
-   ```
-
-### How the deployment is configured
-
-* `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS` pick up `RENDER_EXTERNAL_HOSTNAME`
-  automatically, so no host configuration is required.
-* Static files are served by WhiteNoise with compression and content hashing.
-* With `DEBUG=False`, Django enforces HTTPS redirects, secure and HTTP-only cookies,
-  HSTS, `X-Frame-Options: DENY` and no-sniff headers.
-* `DATABASE_URL` takes priority over the `DB_*` variables, and SSL is required for
-  PostgreSQL connections in production.
-
-> **Uploaded files on the free plan.** Render's free instances have an ephemeral
-> filesystem, so profile photos uploaded to `media/` are lost on redeploy. Attach a
-> persistent disk (paid plan) or an object storage backend if you need them to survive.
+- Unique train numbers
+- Unique station codes
+- Unique route names
+- Unique platform numbers within a station
+- Unique halt sequence numbers within a route
+- Positive coach counts
+- Non-negative route distance
+- Valid arrival/departure ordering
+- Prevention of overlapping platform schedules
+- Valid route halt timing offsets
 
 ---
 
-## Command reference
+# 🗺️ Roadmap
 
-```bash
-# Environment
-python -m venv venv
-venv/Scripts/activate            # Windows
-source venv/bin/activate         # macOS / Linux
-pip install -r requirements.txt
-
-# Database
-python manage.py makemigrations
-python manage.py migrate
-python manage.py createsuperuser
-python manage.py seed_data
-python manage.py seed_data --flush
-
-# Development
-python manage.py runserver
-python manage.py check
-python manage.py test
-
-# Production
-python manage.py collectstatic --no-input
-gunicorn config.wsgi:application
-```
+- [x] Authentication and user management
+- [x] Role-based access control
+- [x] Railway master data management
+- [x] Train and schedule management
+- [x] Dashboard analytics
+- [x] Notifications
+- [x] Activity/audit logging
+- [x] Database validation
+- [x] Render deployment configuration
+- [ ] Advanced reporting
+- [ ] Additional operational analytics
+- [ ] Production object storage for uploaded media
 
 ---
 
-## License
+# 🤝 Contributing
 
-Built as an academic project. Use and adapt it freely for learning purposes.
+Contributions, suggestions and improvements are welcome.
+
+1. Fork the repository.
+2. Create a feature branch.
+3. Make your changes.
+4. Run the test suite.
+5. Commit your changes.
+6. Open a pull request.
+
+---
+
+# 📄 License
+
+Built as an academic project and intended for learning, demonstration and further development.
+
+---
+
+## 👨‍💻 Project
+
+**RailCore ERP** — Railway Enterprise Resource Planning System
+
+**Repository:** https://github.com/WINSTER000/RailCoreERP
